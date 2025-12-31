@@ -1,10 +1,10 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Config:
     BOT_TOKEN = os.getenv("BOT_TOKEN", "")
@@ -35,7 +35,3 @@ class Config:
     DEFAULT_FILENAME_FORMAT = "{manga_name} [Ch-{chapter}]"
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

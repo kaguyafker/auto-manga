@@ -1,6 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
+
 
 import logging
 import aiohttp
@@ -425,6 +423,4 @@ class AllMangaAPI:
         
         return results
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
+

@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 from pyrogram import Client, filters, enums
@@ -110,10 +107,7 @@ async def dump_channel_menu(client, callback_query):
     except Exception as e:
          pass
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 @Client.on_callback_query(filters.regex("^set_dump_input$"))
@@ -167,7 +161,3 @@ async def rem_channel_cmd(client, message):
     await message.reply(f"<blockquote><b>✅ Upload Channel Removed</b></blockquote>", parse_mode=enums.ParseMode.HTML)
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

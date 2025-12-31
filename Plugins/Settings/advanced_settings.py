@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 from pyrogram import Client, filters, enums
@@ -37,7 +34,3 @@ async def set_regex_cb(client, callback_query):
     asyncio.create_task(timeout_handler(client, callback_query.message, callback_query.from_user.id, "waiting_regex"))
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

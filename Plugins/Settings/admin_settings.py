@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 from pyrogram import Client, filters, enums
@@ -133,10 +130,7 @@ async def list_admins_cb(client, callback_query):
     except Exception as e:
         await callback_query.answer(f"Error: {e}", show_alert=True)
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
         
 @Client.on_callback_query(filters.regex("^fsub_config_btn$"))
@@ -257,7 +251,3 @@ async def admin_channels_cb(client, callback_query):
 
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

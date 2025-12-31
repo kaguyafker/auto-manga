@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 from pyrogram import Client, filters, enums
@@ -35,7 +32,7 @@ async def settings_main_menu(client, callback_query):
                 InlineKeyboardButton("File Type", callback_data="set_file_type_btn")
             ],
 
-            [InlineKeyboardButton("Rexbots Offical", callback_data="header_watermark")],
+            [InlineKeyboardButton("Watermark Settings", callback_data="header_watermark")],
 
             [
                 InlineKeyboardButton("Hyper Link", callback_data="set_hyperlink_btn"),
@@ -196,10 +193,7 @@ async def set_source_menu(client, callback_query):
     except Exception as e:
         await callback_query.answer("Error opening source menu")
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 @Client.on_callback_query(filters.regex("^set_source_(.+)$"))
@@ -210,7 +204,3 @@ async def set_source_callback(client, callback_query):
     await set_source_menu(client, callback_query)
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 import logging
 import asyncio
@@ -338,7 +335,3 @@ class Downloader:
         return await self.download_image(cover_url, output_path, headers=headers)
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

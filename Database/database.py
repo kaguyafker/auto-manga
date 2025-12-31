@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 import motor.motor_asyncio
 import logging
@@ -762,7 +759,3 @@ class Master:
 Seishiro = Master(Config.DB_URL, Config.DB_NAME)
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

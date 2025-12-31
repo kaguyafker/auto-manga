@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 from pyrogram import Client, filters, enums
@@ -160,7 +157,7 @@ async def watermark_menu(client, callback_query):
     
     buttons = [
         [
-            InlineKeyboardButton("set text", callback_data="wm_set_text"),
+            InlineKeyboardButton("Watermark Settings", callback_data="header_watermark"),
             InlineKeyboardButton("set position", callback_data="wm_set_pos")
         ],
         [
@@ -188,10 +185,7 @@ async def wm_set_text_cb(client, callback_query):
     await edit_msg_with_pic(callback_query.message, text, InlineKeyboardMarkup(buttons))
     asyncio.create_task(timeout_handler(client, callback_query.message, callback_query.from_user.id, "waiting_wm_text"))
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 @Client.on_callback_query(filters.regex("^wm_delete$"))
@@ -360,7 +354,3 @@ async def view_progress_cb(client, callback_query):
         pass # Ignore Message not modified errors
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

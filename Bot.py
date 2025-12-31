@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 import sys
@@ -487,7 +484,15 @@ class MangaDexBot:
                     return False
 
                 logger.info("Chapter posted successfully!")
-                await self.telegram.send_notification(f"Posted: {manga_title} - Ch {chapter_num}")
+                
+                # Send auto-update notification to personal chat only (made by @Koushik_Sama)
+                notification_msg = (
+                    f"✅ <b>Auto Update Posted</b>\n\n"
+                    f"<blockquote><b>{clean_title}</b></blockquote>\n"
+                    f"<blockquote><i>{clean_chapter}</i></blockquote>\n\n"
+                    f"<i>Made by @Koushik_Sama</i>"
+                )
+                await self.telegram.send_notification(notification_msg)
                 return True
 
         except Exception as e:
@@ -645,7 +650,3 @@ if __name__ == "__main__":
     asyncio.run(main())
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

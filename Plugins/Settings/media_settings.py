@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
@@ -109,10 +106,7 @@ async def del_banner_cb(client, callback_query):
     await callback_query.answer(f"Banner {num} deleted!", show_alert=True)
     await set_banner_cb(client, callback_query)
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 @Client.on_callback_query(filters.regex("^show_banner_(1|2)$"))
@@ -218,7 +212,3 @@ async def set_thumb_cb(client, callback_query):
 
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

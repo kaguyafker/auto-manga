@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 import logging
 import asyncio
@@ -67,7 +64,7 @@ class PyrogramHandler:
         try:
             if not self.user_id or not self.app:
                 return False
-            await self.app.send_message(self.user_id, message)
+            await self.app.send_message(self.user_id, message, parse_mode=enums.ParseMode.HTML)
             return True
         except FloodWait as e:
             self.flood_wait_until = datetime.now() + timedelta(seconds=e.value + 5)
@@ -153,7 +150,3 @@ class PyrogramHandler:
             return False
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

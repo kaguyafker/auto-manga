@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 import asyncio
 from flask import Flask
@@ -21,7 +18,3 @@ async def timeout_handler(client, message, user_id, state_key, delay=30):
             pass
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-# Supoort group @rexbotschat
+
 
 import logging
 import aiohttp
@@ -73,8 +70,8 @@ class MangakakalotAPI:
                     soup = BeautifulSoup(html, 'html.parser')
 
                 # Find all <a> tags that are manga titles (long text, no 'chapter' in href)
-                # Fixed regex: remove leading ^ to support absolute URLs
-                manga_a_tags = soup.find_all('a', href=re.compile(r'/manga/[^/]+$'))
+                # Support both relative and absolute URLs
+                manga_a_tags = soup.find_all('a', href=re.compile(r'(/manga/[^/]+$|^https?://[^/]+/manga/[^/]+$)'))
 
                 for manga_a in manga_a_tags:
                     if len(chapters) >= limit:
@@ -88,8 +85,8 @@ class MangakakalotAPI:
                     # Look for <ul> or direct <li> with chapter links after the title
                     chapter_container = parent.find_next_sibling('ul') or parent
 
-                    # Find all chapter <a> in the vicinity
-                    chapter_as = chapter_container.find_all('a', href=re.compile(r'/chapter/'), limit=10)  # limit per manga
+                    # Find all chapter <a> in the vicinity - support various URL patterns
+                    chapter_as = chapter_container.find_all('a', href=re.compile(r'(/chapter/|chapter-\d+)'), limit=10)  # limit per manga
 
                     for chapter_a in chapter_as:
                         if len(chapters) >= limit:
@@ -161,7 +158,17 @@ class MangakakalotAPI:
 
                     container = soup.find('div', class_='container-chapter-reader') or \
                                 soup.find('div', class_='reading-content') or \
-                                soup.find('div', class_='read-content')
+                                soup.find('div', class_='read-content') or \
+                                soup.find('div', class_='vung-doc') or \
+                                soup.find('div', id='vungdoc')
+
+                    if not container:
+                        # Try finding any div with lots of images as last resort
+                        all_divs = soup.find_all('div')
+                        for div in all_divs:
+                            if len(div.find_all('img')) > 3:
+                                container = div
+                                break
 
                     if not container:
                         return None

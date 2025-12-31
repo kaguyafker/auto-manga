@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 import logging
@@ -118,10 +115,7 @@ async def start_msg(client, message):
         except:
             pass
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 @Client.on_callback_query(filters.regex("^help_menu$"))
@@ -139,7 +133,3 @@ async def help_menu(client, callback_query):
     await edit_msg_with_pic(callback_query.message, paraphrased, InlineKeyboardMarkup(buttons))
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

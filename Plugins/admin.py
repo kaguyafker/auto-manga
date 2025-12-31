@@ -1,7 +1,4 @@
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat
+
 
 
 import logging
@@ -211,10 +208,7 @@ async def rem_watermark_msg(client: Client, message: Message):
         await message.reply_text(f"❌ failed to remove watermark: {str(e)}")
 
 
-# rexbots
-# don't remove credit
-# telegram channel @rexbots_official 
-#supoort group @rexbotschat
+
 
 
 @Client.on_message(filters.command("broadcast") & filters.private & admin)
@@ -393,7 +387,3 @@ async def fsub_settings_callback(client: Client, callback_query):
 
 
 
-# Rexbots
-# Don't Remove Credit
-# Telegram Channel @RexBots_Official 
-#Supoort group @rexbotschat

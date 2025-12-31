@@ -74,24 +74,4 @@ docker build -t rexbots-manga-bot -f Docker .
 docker run -d --env-file .env rexbots-manga-bot
 ```
 
-## 🤝 Contributors
-
-A huge thanks to the developers who made this project possible:
-
-<div align="center">
-
-| [**Abhi**](https://t.me/about_zani) | [**Abhinav**](https://t.me/adityaabhinav) | [**Master**](https://t.me/V_Sbotmaker) |
-| :---: | :---: | :---: | :---: |
-| Owner | Developer | Developer |
-
-</div>
-
-## 📞 Support
-
-For queries, feature requests, or bug reports, join our official channel:
-
-<div align="center">
-  <a href="https://t.me/akaza7902">
-    <img src="https://img.shields.io/badge/RexBots-Official%20Channel-blue?style=for-the-badge&logo=telegram">
-  </a>
-</div>
+remade version of auto-manga-bot from @rex_bots
