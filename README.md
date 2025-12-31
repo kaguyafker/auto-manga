@@ -53,8 +53,8 @@ To run the bot, you need to set the following environment variables:
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/abhinai2244/MANGA-BOT.git
-    cd MANGA-BOT
+    git clone
+    cd auto-manga
     ```
 
 2.  **Install dependencies:**
