@@ -4,7 +4,7 @@ import base64
 import logging
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
-from Bot import Config
+from bot import Config
 
 logger = logging.getLogger(__name__)
 

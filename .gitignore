@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.session
+*.session-journal
+env/
+venv/
+.env
+.DS_Store
+downloads/
+bot_state.json
+manga_ids_cache.json
