@@ -88,9 +88,6 @@ class Master:
         except Exception as e:
             logging.error(f"Error checking if user {user_id} is banned: {e}")
             return False
-        except Exception as e:
-            logging.error(f"Error checking if user {user_id} is banned: {e}")
-            return False
 
     async def ban_user(self, user_id: int, reason: str = None, duration: int = 0) -> bool:
         """

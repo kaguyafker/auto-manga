@@ -71,13 +71,17 @@ async def settings_main_menu(client, callback_query):
 async def settings_main_menu_2(client, callback_query):
     try:
         buttons = [
-            [InlineKeyboardButton("Dump Channel", callback_data="header_dump_channel")],
+            [
+                InlineKeyboardButton("Dump Channel", callback_data="header_dump_channel"),
+                InlineKeyboardButton("Log Channel", callback_data="set_log_input")
+            ],
 
             [
                 InlineKeyboardButton("Update Text", callback_data="set_update_text_btn"),
             ],
 
             [InlineKeyboardButton("Monitor & Fsub", callback_data="header_new_items")],
+
 
             [
                 InlineKeyboardButton(f"Monitor: {'✅ ON' if await Seishiro.get_monitoring_status() else '❌ OFF'}", callback_data="toggle_monitor"),
@@ -112,12 +116,14 @@ async def settings_main_menu_2(client, callback_query):
         ]
         
         dump_ch = await Seishiro.get_config("dump_channel")
+        log_ch = await Seishiro.get_config("log_channel")
         update_ch = await Seishiro.get_default_channel()
         
         text = (
             "<code>⚙️ Settings Menu (Page 2/2)</code>\n\n"
             f"<code>Current Channels:</code>\n"
             f"<code>🗑️ Dump: {dump_ch if dump_ch else 'Not Set'}</code>\n"
+            f"<code>📊 Log: {log_ch if log_ch else 'Not Set'}</code>\n"
             f"<code>📢 Update: {update_ch if update_ch else 'Not Set'}</code>\n\n"
             "<code>Use arrows to navigate between pages.</code>"
         )

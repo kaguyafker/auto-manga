@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 import zipfile
-import zipfile
 import re
 import pypdf # Added for PDF password protection
 

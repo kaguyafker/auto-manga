@@ -4,7 +4,7 @@ import base64
 import logging
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
-from bot import Config
+from config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ def encode_payload(string):
     return base64.urlsafe_b64encode(string.encode("utf-8")).decode("utf-8").rstrip("=")
 
 @Client.on_message(filters.command("makepost"))
-async def create_post(Client: Client, Message: Message):
+async def create_post(client, message):
     if message.from_user.id != Config.USER_ID:
         return
 
@@ -43,7 +43,7 @@ async def create_post(Client: Client, Message: Message):
     file_id = message.reply_to_message.document.file_id
     encoded_id = encode_payload(file_id)
     
-    bot_username = Client.me.username
+    bot_username = client.me.username
     if not bot_username:
         try:
             me = await client.get_me()

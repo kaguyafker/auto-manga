@@ -114,7 +114,7 @@ async def list_admins_cb(client, callback_query):
         list_text = f"👮‍♂️ admin list:\n\n"
         
         try:
-             owner = await client.get_users(Config.user_id)
+             owner = await client.get_users(Config.USER_ID)
              owner_name = owner.first_name
         except:
              owner_name = "owner"
@@ -251,10 +251,38 @@ async def admin_channels_cb(client, callback_query):
             f"<i>Use /setlogchannel, /setdumpchannel to configure</i>"
         )
         
-        buttons = [[InlineKeyboardButton("⬅ back", callback_data="admin_menu_btn")]]
+        buttons = [
+            [
+                InlineKeyboardButton("Set Log 📊", callback_data="set_log_input"),
+                InlineKeyboardButton("Set Dump 💾", callback_data="set_dump_input")
+            ],
+            [
+                InlineKeyboardButton("Update Ch 📢", callback_data="set_channel_btn"),
+                InlineKeyboardButton("Auto Update 🤖", callback_data="header_auto_update_channels")
+            ],
+            [InlineKeyboardButton("⬅ back", callback_data="admin_menu_btn")]
+        ]
         await edit_msg_with_pic(callback_query.message, text, InlineKeyboardMarkup(buttons))
     except Exception as e:
         await callback_query.answer(f"Error: {e}", show_alert=True)
+
+
+@Client.on_callback_query(filters.regex("^set_log_input$"))
+async def set_log_input_cb(client, callback_query):
+    if callback_query.from_user.id != Config.USER_ID:
+        await callback_query.answer("❌ This is owner-only!", show_alert=True)
+        return
+        
+    text = get_styled_text(
+        "📊 Set Log Channel\n\n"
+        "Send the Channel ID (-100...) where bot activities will be logged.\n"
+        "Bot must be admin in that channel!\n"
+        "(Auto-close in 30s)"
+    )
+    user_states[callback_query.from_user.id] = {"state": "waiting_log_channel"}
+    buttons = [[InlineKeyboardButton("❌ cancel", callback_data="cancel_input")]]
+    await edit_msg_with_pic(callback_query.message, text, InlineKeyboardMarkup(buttons))
+    asyncio.create_task(timeout_handler(client, callback_query.message, callback_query.from_user.id, "waiting_log_channel"))
 
 
 

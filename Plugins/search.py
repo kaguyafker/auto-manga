@@ -42,10 +42,11 @@ def get_api_class(source):
 async def message_handler(client, message):
     user_id = message.from_user.id
     
-    if user_id in user_states:
-        if user_states[user_id] == WAITING_CHAPTER_INPUT:
-            await custom_dl_input_handler(client, message)
-            return
+    state_info = user_states.get(user_id)
+    if isinstance(state_info, dict) and state_info.get("state") == WAITING_CHAPTER_INPUT:
+        await custom_dl_input_handler(client, message)
+        return
+    elif user_id in user_states:
         return
     
     # Check authorization before search
@@ -168,8 +169,8 @@ async def search_source_cb(client, callback_query):
     source = parts[2]
     query = parts[3] # this might be truncated, but we used Message text in original. 
     
-    api = get_api_class(source)
-    if not api:
+    API = get_api_class(source)
+    if not API:
         await callback_query.answer("source not available", show_alert=True)
         return
         
@@ -303,7 +304,7 @@ async def custom_dl_start_cb(client, callback_query):
     
     user_id = callback_query.from_user.id
     
-    user_states[user_id] = WAITING_CHAPTER_INPUT
+    user_states[user_id] = {"state": WAITING_CHAPTER_INPUT}
     user_data[user_id] = {
         'source': source,
         'manga_id': manga_id

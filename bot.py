@@ -32,7 +32,7 @@ from Plugins.logs_dump import log_activity, send_to_dump
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(Message)s',
+    format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 logger = logging.getLogger(__name__)
@@ -55,7 +55,8 @@ class MangaDexBot:
         self.upload_channel_id = None # Logic: This is the MAIN CHANNEL (Update/Auto)
         self.dump_channel_id = None # Logic: This is the DUMP CHANNEL (File Storage)
         self.filename_format = Config.DEFAULT_FILENAME_FORMAT
-        self.has_custom_thumbnail = False  # Flag if DB has custom thumb
+        self.has_custom_thumbnail = False  
+        self.custom_thumbnail_id = None
 
         self.telegram = PyrogramHandler(
             Config.API_ID, Config.API_HASH, Config.BOT_TOKEN,
@@ -106,11 +107,13 @@ class MangaDexBot:
 
         try:
             thumb = await self.db_master.get_thumbnail()
+            self.custom_thumbnail_id = thumb
             self.has_custom_thumbnail = bool(thumb)
             logger.info(f"Custom thumbnail in DB: {'Yes' if self.has_custom_thumbnail else 'No (using cover)'}")
         except Exception as e:
             logger.error(f"Thumbnail check error: {e}")
             self.has_custom_thumbnail = False
+            self.custom_thumbnail_id = None
 
     async def load_state(self) -> dict:
         if self.state_file.exists():
@@ -367,9 +370,14 @@ class MangaDexBot:
                 if base_file != file_path:
                     base_file.rename(file_path)
 
-                if self.has_custom_thumbnail:
-                    thumb_path = cover_path if cover_path and cover_path.exists() else None
-                    logger.info("Custom thumbnail enabled → using manga cover as thumb")
+                if self.has_custom_thumbnail and self.custom_thumbnail_id:
+                    thumb_path = chapter_dir.parent / "custom_thumb.jpg"
+                    try:
+                        await self.telegram.app.download_media(self.custom_thumbnail_id, file_name=str(thumb_path))
+                        logger.info("Using custom thumbnail from DB")
+                    except Exception as e:
+                        logger.error(f"Failed to download custom thumb: {e}")
+                        thumb_path = cover_path if cover_path and cover_path.exists() else None
                 else:
                     thumb_path = cover_path if cover_path and cover_path.exists() else None
 
@@ -482,7 +490,7 @@ class MangaDexBot:
                      auto_channels = await self.db_master.get_auto_update_channels() # Returns list of dicts {'id':..., 'name':...} or similar
                      if auto_channels:
                          for ch in auto_channels:
-                             cid = ch.get('id')
+                             cid = ch.get('_id')
                              if cid and cid != self.upload_channel_id:
                                   try:
                                       await self.telegram.send_post(
@@ -519,9 +527,6 @@ class MangaDexBot:
                 await self.telegram.send_notification(notification_msg)
                 return True
 
-        except Exception as e:
-            logger.error(f"Processing error: {e}")
-            return False
         except Exception as e:
             logger.error(f"Processing error: {e}")
             return False
@@ -649,7 +654,7 @@ class MangaDexBot:
 
         logger.info(f"Upload Channel: {self.upload_channel_id}")
         logger.info(f"Filename Format: {self.filename_format}")
-        logger.info(f"Custom Thumbnail: {'Enabled' if self.has_custom_thumbnail else 'Enabled'}")
+        logger.info(f"Custom Thumbnail: {'Enabled' if self.has_custom_thumbnail else 'Disabled'}")
         logger.info("="*60 + "\n")
 
         monitor_task = asyncio.create_task(self.monitor_loop())

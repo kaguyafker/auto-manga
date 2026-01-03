@@ -29,7 +29,12 @@ async def settings_input_listener(client, message):
         return
 
     state_info = user_states[user_id]
+    if not isinstance(state_info, dict):
+        return
+        
     state = state_info.get("state")
+    if state == "WAITING_CHAPTER_INPUT":
+        return
     
     try:
         if state == "waiting_caption":
@@ -72,7 +77,7 @@ async def settings_input_listener(client, message):
                 await log_activity(client, "SETTINGS", f"🖼️ <b>Banner {num} Updated</b>", user_id)
                 
                 from Plugins.Settings.media_settings import get_banner_menu
-                text, markup = await get_banner_menu(Client)
+                text, markup = await get_banner_menu(client)
                 await message.reply(text, reply_markup=markup, parse_mode=enums.ParseMode.HTML)
             else:
                 await message.reply("❌ please send a photo.")
@@ -96,6 +101,26 @@ async def settings_input_listener(client, message):
                 await log_activity(client, "CHANNEL", f"💾 <b>Dump Channel Set</b>\n<code>{cid}</code>", user_id)
             except ValueError:
                 await message.reply("❌ invalid id.")
+                return
+
+        elif state == "waiting_log_channel":
+            try:
+                cid = int(message.text)
+                # Verify channel access
+                try:
+                    chat = await client.get_chat(cid)
+                    title = chat.title
+                except Exception:
+                    await message.reply("❌ Bot cannot access this channel. Make sure it is admin there!")
+                    return
+                
+                await Seishiro.set_config("log_channel", cid)
+                await message.reply(get_styled_text(f"✅ Log Channel Set: {title} ({cid})"), parse_mode=enums.ParseMode.HTML)
+                
+                # Test the log channel
+                await log_activity(client, "SUCCESS", "📊 <b>Log Channel Configured via UI</b>", user_id)
+            except ValueError:
+                await message.reply("❌ Invalid channel ID format.")
                 return
 
         elif state == "waiting_auc_id":
@@ -246,7 +271,8 @@ async def settings_input_listener(client, message):
         elif state == "waiting_thumb":
             if message.photo:
                 file_id = message.photo.file_id
-                await Seishiro.set_config("custom_thumbnail", file_id)
+                file_unique_id = message.photo.file_unique_id
+                await Seishiro.set_thumbnail(file_id, file_unique_id)
                 await message.reply(get_styled_text("✅ Custom Thumbnail Set!"), parse_mode=enums.ParseMode.HTML)
             else:
                 await message.reply("❌ please send a photo.")
@@ -351,7 +377,10 @@ async def settings_input_listener(client, message):
     except Exception as e:
         await message.reply(f"❌ Error: {e}")
     finally:
+        # Only cleanup if it's a settings-related state
         if user_id in user_states:
-            del user_states[user_id]
+            curr_state = user_states[user_id].get("state") if isinstance(user_states[user_id], dict) else None
+            if curr_state != "WAITING_CHAPTER_INPUT":
+                del user_states[user_id]
 
 

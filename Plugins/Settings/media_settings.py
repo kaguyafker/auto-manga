@@ -24,7 +24,7 @@ async def caption_settings_callback(client, callback_query):
         user_states[callback_query.from_user.id] = {"state": "waiting_caption"}
         await edit_msg_with_pic(callback_query.message, text, None) # No buttons shown in this snippet but usually there are
     elif data == "view_caption_cb":
-        pass
+    pass
 
 @Client.on_message(filters.command("set_caption") & filters.private & admin)
 async def set_caption_cmd(client, message):
@@ -173,12 +173,13 @@ async def sticker_placeholder(client, callback_query):
         "<i>Send sticker now...</i>\n"
         "<i>(Auto-close in 30s)</i>"
     )
-    user_states[callback_query.from_user.id] = {"state": f"waiting_{key}"}
+    state_key = key.replace('_btn', '')
+    user_states[callback_query.from_user.id] = {"state": f"waiting_{state_key}"}
     
     buttons = [[InlineKeyboardButton("❌ cancel", callback_data="cancel_input")]]
     await callback_query.message.edit_text(text, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=enums.ParseMode.HTML)
     
-    asyncio.create_task(timeout_handler(client, callback_query.message, callback_query.from_user.id, f"waiting_{key}"))
+    asyncio.create_task(timeout_handler(client, callback_query.message, callback_query.from_user.id, f"waiting_{state_key}"))
 
 @Client.on_callback_query(filters.regex("^set_update_text_btn$"))
 async def update_text_cb(client, callback_query):
