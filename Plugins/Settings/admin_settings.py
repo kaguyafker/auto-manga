@@ -162,7 +162,6 @@ async def view_wm_cb(client, callback_query):
         current_wm = await Seishiro.get_watermark()
         if current_wm:
             text = (
-            text = (
                 f"💧 Current Watermark:\n\n"
                 f"Text: {current_wm['text']}\n"
                 f"Pos: {current_wm['position']}\n"
