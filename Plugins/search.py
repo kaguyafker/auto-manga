@@ -40,90 +40,100 @@ def get_api_class(source):
 
 @Client.on_message(filters.text & filters.private & ~filters.command(["start", "help", "settings", "search"]))
 async def message_handler(client, message):
-    user_id = message.from_user.id
-    
-    state_info = user_states.get(user_id)
-    if isinstance(state_info, dict) and state_info.get("state") == WAITING_CHAPTER_INPUT:
-        await custom_dl_input_handler(client, message)
-        return
-    elif user_id in user_states:
-        return
-    
-    # Check authorization before search
-    from Plugins.helper import check_fsub
-    
-    # Check force subscribe
-    missing = await check_fsub(client, user_id)
-    if missing:
-        from pyrogram.types import InlineKeyboardButton
-        buttons = []
-        for ch in missing:
-            buttons.append([InlineKeyboardButton(f"Join {ch['title']}", url=ch['url'])])
-        buttons.append([InlineKeyboardButton("✅ Done", url=f"https://t.me/{client.me.username}?start=True")])
+    try:
+        user_id = message.from_user.id
+        logger.info(f"Search message received from {user_id}: {message.text}")
         
-        await message.reply_text(
-            "<b>⚠️ You must join our channels to use this bot!</b>\n\n"
-            "Please join the channels below and try again.",
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML
-        )
-        return
-    
-    # Check if user is banned
-    if await Seishiro.is_user_banned(user_id):
-        await message.reply_text("🚫 **Access Denied**\n\nYou are banned from using this bot.")
-        return
-    
-    # Check if user is allowed
-    if user_id != Config.USER_ID and not await Seishiro.is_user_allowed(user_id):
-        await message.reply_text("🚫 **Access Denied**\n\nYou are not authorized to use this bot.\nContact the owner via @koushik_Sama to get access.")
-        return
-    
-    # Text Search Implementation
-    await search_logic(client, message, message.text.strip())
+        state_info = user_states.get(user_id)
+        if isinstance(state_info, dict) and state_info.get("state") == WAITING_CHAPTER_INPUT:
+            await custom_dl_input_handler(client, message)
+            return
+        elif user_id in user_states:
+            message.continue_propagation()
+            return
+        
+        # Check authorization before search
+        from Plugins.helper import check_fsub
+        
+        # Check force subscribe
+        missing = await check_fsub(client, user_id)
+        if missing:
+            from pyrogram.types import InlineKeyboardButton
+            buttons = []
+            for ch in missing:
+                buttons.append([InlineKeyboardButton(f"Join {ch['title']}", url=ch['url'])])
+            buttons.append([InlineKeyboardButton("✅ Done", url=f"https://t.me/{client.me.username}?start=True")])
+            
+            await message.reply_text(
+                "<b>⚠️ You must join our channels to use this bot!</b>\n\n"
+                "Please join the channels below and try again.",
+                reply_markup=InlineKeyboardMarkup(buttons),
+                parse_mode=enums.ParseMode.HTML
+            )
+            return
+        
+        # Check if user is banned
+        if await Seishiro.is_user_banned(user_id):
+            await message.reply_text("🚫 **Access Denied**\n\nYou are banned from using this bot.")
+            return
+        
+        # Check if user is allowed
+        if user_id != Config.USER_ID and not await Seishiro.is_user_allowed(user_id):
+            await message.reply_text("🚫 **Access Denied**\n\nYou are not authorized to use this bot.\nContact the owner via @koushik_Sama to get access.")
+            return
+        
+        # Text Search Implementation
+        await search_logic(client, message, message.text.strip())
+    except Exception as e:
+        logger.error(f"Error in search message_handler: {e}")
+        await message.reply(f"❌ search error: {e}")
 
 @Client.on_message(filters.command("search") & filters.private)
 async def search_command_handler(client, message):
-    """Handle /search command for manga queries"""
-    user_id = message.from_user.id
-    
-    # Check authorization before search
-    from Plugins.helper import check_fsub
-    
-    # Check force subscribe
-    missing = await check_fsub(client, user_id)
-    if missing:
-        from pyrogram.types import InlineKeyboardButton
-        buttons = []
-        for ch in missing:
-            buttons.append([InlineKeyboardButton(f"Join {ch['title']}", url=ch['url'])])
-        buttons.append([InlineKeyboardButton("✅ Done", url=f"https://t.me/{client.me.username}?start=True")])
+    try:
+        user_id = message.from_user.id
+        logger.info(f"Search command received from {user_id}: {message.text}")
         
-        await message.reply_text(
-            "<b>⚠️ You must join our channels to use this bot!</b>\n\n"
-            "Please join the channels below and try again.",
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML
-        )
-        return
-    
-    # Check if user is banned
-    if await Seishiro.is_user_banned(user_id):
-        await message.reply_text("🚫 **Access Denied**\n\nYou are banned from using this bot.")
-        return
-    
-    # Check if user is allowed
-    if user_id != Config.USER_ID and not await Seishiro.is_user_allowed(user_id):
-        await message.reply_text("🚫 **Access Denied**\n\nYou are not authorized to use this bot.\nContact the owner via @koushik_Sama to get access.")
-        return
-    
-    parts = message.text.split(maxsplit=1)
-    if len(parts) < 2:
-        await message.reply("❌ usage: /search <query>")
-        return
-    
-    query = parts[1].strip()
-    await search_logic(client, message, query)
+        # Check authorization before search
+        from Plugins.helper import check_fsub
+        
+        # Check force subscribe
+        missing = await check_fsub(client, user_id)
+        if missing:
+            from pyrogram.types import InlineKeyboardButton
+            buttons = []
+            for ch in missing:
+                buttons.append([InlineKeyboardButton(f"Join {ch['title']}", url=ch['url'])])
+            buttons.append([InlineKeyboardButton("✅ Done", url=f"https://t.me/{client.me.username}?start=True")])
+            
+            await message.reply_text(
+                "<b>⚠️ You must join our channels to use this bot!</b>\n\n"
+                "Please join the channels below and try again.",
+                reply_markup=InlineKeyboardMarkup(buttons),
+                parse_mode=enums.ParseMode.HTML
+            )
+            return
+        
+        # Check if user is banned
+        if await Seishiro.is_user_banned(user_id):
+            await message.reply_text("🚫 **Access Denied**\n\nYou are banned from using this bot.")
+            return
+        
+        # Check if user is allowed
+        if user_id != Config.USER_ID and not await Seishiro.is_user_allowed(user_id):
+            await message.reply_text("🚫 **Access Denied**\n\nYou are not authorized to use this bot.\nContact the owner via @koushik_Sama to get access.")
+            return
+        
+        parts = message.text.split(maxsplit=1)
+        if len(parts) < 2:
+            await message.reply("❌ usage: /search <query>")
+            return
+        
+        query = parts[1].strip()
+        await search_logic(client, message, query)
+    except Exception as e:
+        logger.error(f"Error in search_command_handler: {e}")
+        await message.reply(f"❌ search error: {e}")
 
 async def search_logic(client, message, query):
     if len(query) < 2:
@@ -288,7 +298,7 @@ async def chapters_list_cb(client, callback_query):
         if callback_query.message.photo:
             await callback_query.message.edit_caption(caption=caption_text, reply_markup=InlineKeyboardMarkup(buttons))
         else:
-            await callback_query.message.edit_text(caption_text, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=enums.ParseMode.html)
+            await callback_query.message.edit_text(caption_text, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=enums.ParseMode.HTML)
     except Exception as e:
         print(f"Edit error: {e}")
 

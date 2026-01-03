@@ -36,8 +36,10 @@ async def settings_input_listener(client, message):
     if state == "WAITING_CHAPTER_INPUT":
         return
     
+    handled = False
     try:
         if state == "waiting_caption":
+            handled = True
             await Seishiro.set_caption(message.text)
             await message.reply(get_styled_text("✅ Caption Updated Successfully!"), parse_mode=enums.ParseMode.HTML)
             await log_activity(client, "SETTINGS", f"📝 <b>Caption Updated</b>\n<code>{message.text}</code>", user_id)
@@ -66,11 +68,13 @@ async def settings_input_listener(client, message):
             await message.reply(text, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=enums.ParseMode.HTML)
 
         elif state == "waiting_format":
+            handled = True
             await Seishiro.set_format(message.text)
             await message.reply(get_styled_text("✅ File Name Format Updated!"), parse_mode=enums.ParseMode.HTML)
             await log_activity(client, "SETTINGS", f"📝 <b>Format Updated</b>\n<code>{message.text}</code>", user_id)
 
         elif state.startswith("waiting_banner_"):
+            handled = True
             num = state.split("_")[-1]
             if message.photo:
                 await Seishiro.set_config(f"banner_image_{num}", message.photo.file_id)
@@ -84,6 +88,7 @@ async def settings_input_listener(client, message):
                 return
 
         elif state == "waiting_channel":
+            handled = True
             try:
                 cid = int(message.text)
                 await Seishiro.set_default_channel(cid)
@@ -94,6 +99,7 @@ async def settings_input_listener(client, message):
                 return
 
         elif state == "waiting_dump_channel":
+            handled = True
             try:
                 cid = int(message.text)
                 await Seishiro.set_config("dump_channel", cid)
@@ -104,6 +110,7 @@ async def settings_input_listener(client, message):
                 return
 
         elif state == "waiting_log_channel":
+            handled = True
             try:
                 cid = int(message.text)
                 # Verify channel access
@@ -124,6 +131,7 @@ async def settings_input_listener(client, message):
                 return
 
         elif state == "waiting_auc_id":
+            handled = True
             try:
                 cid = int(message.text)
                 try:
@@ -153,6 +161,7 @@ async def settings_input_listener(client, message):
                 return
         
         elif state == "waiting_password":
+            handled = True
             if message.text.upper() == "OFF":
                 await Seishiro.set_config("pdf_password", None)
                 await message.reply(get_styled_text("✅ Password Protection Disabled."), parse_mode=enums.ParseMode.HTML)
@@ -170,14 +179,17 @@ async def settings_input_listener(client, message):
                 return
 
         elif state == "waiting_regex":
+            handled = True
             await Seishiro.set_config("filename_regex", message.text)
             await message.reply(get_styled_text("✅ Regex Pattern Saved."), parse_mode=enums.ParseMode.HTML)
 
         elif state == "waiting_update_text":
+            handled = True
             await Seishiro.set_config("update_text", message.text)
             await message.reply(get_styled_text("✅ Update Text Saved."), parse_mode=enums.ParseMode.HTML)
             
         elif state == "waiting_interval":
+            handled = True
             try:
                 val = int(message.text)
                 if not (60 <= val <= 3600):
@@ -192,6 +204,7 @@ async def settings_input_listener(client, message):
                 await message.reply("❌ invalid number.")
 
         elif state == "waiting_fsub_id":
+            handled = True
             try:
                 cid = int(message.text)
                 try:
@@ -207,6 +220,7 @@ async def settings_input_listener(client, message):
                 await message.reply("❌ invalid id.")
 
         elif state == "waiting_fsub_rem_id":
+            handled = True
             try:
                 cid = int(message.text)
                 if await Seishiro.remove_fsub_channel(cid):
@@ -217,6 +231,7 @@ async def settings_input_listener(client, message):
                 await message.reply("❌ invalid id.")
 
         elif state == "waiting_wm_text":
+            handled = True
             wm = await Seishiro.get_watermark() or {}
             await Seishiro.set_watermark(
                 text=message.text,
@@ -228,6 +243,7 @@ async def settings_input_listener(client, message):
             await message.reply(get_styled_text("✅ Watermark Text Updated!"), parse_mode=enums.ParseMode.HTML)
 
         elif state == "waiting_wm_color":
+            handled = True
             color = message.text
             if not color.startswith("#") or len(color) not in [4, 7]:
                  await message.reply("❌ invalid format. use #rrggbb (e.g. #ff0000).")
@@ -244,6 +260,7 @@ async def settings_input_listener(client, message):
             await message.reply(get_styled_text(f"✅ Color Set: {color}"), parse_mode=enums.ParseMode.HTML)
 
         elif state == "waiting_wm_opacity":
+            handled = True
             try:
                 op = int(message.text)
                 if not (0 <= op <= 255): raise ValueError
@@ -261,6 +278,7 @@ async def settings_input_listener(client, message):
                 await message.reply("❌ invalid number (0-255).")
 
         elif state == "waiting_deltimer":
+            handled = True
             try:
                 val = int(message.text)
                 await Seishiro.set_del_timer(val)
@@ -296,6 +314,7 @@ async def settings_input_listener(client, message):
             await message.reply(get_styled_text(f"✅ {key.replace('_', ' ').title()} Saved.\nID: `{val}`"), parse_mode=enums.ParseMode.HTML)
 
         elif state == "waiting_add_admin":
+            handled = True
             try:
                 new_admin_id = int(message.text)
                 await Seishiro.add_admin(new_admin_id)
@@ -307,6 +326,7 @@ async def settings_input_listener(client, message):
                 await message.reply(f"❌ error: {e}")
 
         elif state == "waiting_del_admin":
+            handled = True
             try:
                 del_id = int(message.text)
                 if del_id == Config.USER_ID:
@@ -321,6 +341,7 @@ async def settings_input_listener(client, message):
                 await message.reply(f"❌ error: {e}")
 
         elif state == "waiting_broadcast_msg":
+            handled = True
              try:
                 status_msg = await message.reply("🚀 preparing broadcast...")
                 all_users = await Seishiro.get_all_users()
@@ -349,6 +370,7 @@ async def settings_input_listener(client, message):
                 await message.reply(f"❌ broadcast error: {e}")
 
         elif state == "waiting_ban_id":
+            handled = True
             try:
                 target_id = int(message.text)
                 if target_id == Config.USER_ID or target_id == message.from_user.id:
@@ -363,6 +385,7 @@ async def settings_input_listener(client, message):
                 await message.reply("❌ invalid user id.")
 
         elif state == "waiting_unban_id":
+            handled = True
             try:
                 target_id = int(message.text)
                 if await Seishiro.unban_user(target_id):
@@ -373,12 +396,15 @@ async def settings_input_listener(client, message):
             except ValueError:
                 await message.reply("❌ invalid user id.")
 
-
+        else:
+            # If no state matched, continue propagation
+            message.continue_propagation()
+            return
     except Exception as e:
         await message.reply(f"❌ Error: {e}")
     finally:
-        # Only cleanup if it's a settings-related state
-        if user_id in user_states:
+        # Only cleanup if it was handled and is a settings-related state
+        if handled and user_id in user_states:
             curr_state = user_states[user_id].get("state") if isinstance(user_states[user_id], dict) else None
             if curr_state != "WAITING_CHAPTER_INPUT":
                 del user_states[user_id]

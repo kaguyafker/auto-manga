@@ -112,3 +112,25 @@ async def check_fsub(client, user_id):
         return []
 
 
+async def format_caption(manga_title: str, chapter_num: str, file_name: str) -> str:
+    """
+    Formats the caption based on the template in database.
+    Supports placeholders: {manga_title}, {chapter_num}, {file_name}
+    """
+    template = await Seishiro.get_caption()
+    if not template:
+        # Fallback default caption
+        import html
+        clean_title = html.escape(manga_title)
+        clean_chapter = html.escape(f"Ch {chapter_num}")
+        return f"<blockquote><b>{clean_title}</b></blockquote>\n\n<blockquote><i>{clean_chapter}</i></blockquote>\n\n@seishiro_atanime"
+    
+    try:
+        return template.format(
+            manga_title=manga_title,
+            chapter_num=chapter_num,
+            file_name=file_name
+        )
+    except Exception as e:
+        print(f"Caption format error: {e}")
+        return f"<b>{manga_title}</b> - Ch {chapter_num}"

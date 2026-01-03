@@ -29,6 +29,7 @@ from Plugins.Sites.allmanga import AllMangaAPI
 from Plugins.uploading import PyrogramHandler
 from Database.database import *
 from Plugins.logs_dump import log_activity, send_to_dump
+from Plugins.helper import format_caption
 
 logging.basicConfig(
     level=logging.INFO,
@@ -459,17 +460,7 @@ class MangaDexBot:
                 clean_chap_title = html.escape(chapter_title) if chapter_title else ""
                 clean_group = html.escape(chapter['group'])
 
-                caption = (
-                    f"<blockquote><b>{clean_title}</b></blockquote>\n\n"
-                    f"<blockquote><i>{clean_chapter}</i>"
-                )
-                if clean_chap_title:
-                    caption += f"\n{clean_chap_title}"
-                caption += (
-                    f"\n{clean_group}\n"
-                    f"English</blockquote>\n\n"
-                    f"@seishiro_atanime"
-                )
+                caption = await format_caption(manga_title, chapter_num, final_name)
 
                 post_photo = str(thumb_path) if thumb_path else None
                 
