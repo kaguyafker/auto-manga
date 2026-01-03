@@ -11,19 +11,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-@Client.on_callback_query(filters.regex("^(set_caption_btn|view_caption_cb)$"))
+@Client.on_callback_query(filters.regex("^view_caption_cb$"))
 async def caption_settings_callback(client, callback_query):
-    data = callback_query.data
-    if data == "set_caption_btn":
-        text = get_styled_text(
-            "<b>📝 Set Caption</b>\n\n"
-            "Sends the caption text you want to use.\n"
-            "Variables: `{manga_name}`, `{chapter}`\n\n"
-            "<i>Send text now...</i>"
-        )
-        user_states[callback_query.from_user.id] = {"state": "waiting_caption"}
-        await edit_msg_with_pic(callback_query.message, text, None) # No buttons shown in this snippet but usually there are
-    elif data == "view_caption_cb":
+    # Logic for viewing caption if any
     pass
 
 @Client.on_message(filters.command("set_caption") & filters.private & admin)
