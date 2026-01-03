@@ -1,7 +1,3 @@
-
-
-
-import logging
 import logging
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -9,7 +5,8 @@ from Database.database import Seishiro
 from config import Config
 from Plugins.helper import edit_msg_with_pic
 from Plugins.logs_dump import log_activity
-import logging
+
+logger = logging.getLogger(__name__)
 logger.info("PLUGIN LOAD: start.py loaded successfully")
 
 
