@@ -48,21 +48,83 @@ async def message_handler(client, message):
             return
         return
     
+    # Check authorization before search
+    from Plugins.helper import check_fsub
+    
+    # Check force subscribe
+    missing = await check_fsub(client, user_id)
+    if missing:
+        from pyrogram.types import InlineKeyboardButton
+        buttons = []
+        for ch in missing:
+            buttons.append([InlineKeyboardButton(f"Join {ch['title']}", url=ch['url'])])
+        buttons.append([InlineKeyboardButton("✅ Done", url=f"https://t.me/{client.me.username}?start=True")])
+        
+        await message.reply_text(
+            "<b>⚠️ You must join our channels to use this bot!</b>\n\n"
+            "Please join the channels below and try again.",
+            reply_markup=InlineKeyboardMarkup(buttons),
+            parse_mode=enums.ParseMode.HTML
+        )
+        return
+    
+    # Check if user is banned
+    if await Seishiro.is_user_banned(user_id):
+        await message.reply_text("🚫 **Access Denied**\n\nYou are banned from using this bot.")
+        return
+    
+    # Check if user is allowed
+    if user_id != Config.USER_ID and not await Seishiro.is_user_allowed(user_id):
+        await message.reply_text("🚫 **Access Denied**\n\nYou are not authorized to use this bot.\nContact the owner via @koushik_Sama to get access.")
+        return
+    
     # Text Search Implementation
-    await search_logic(message, message.text.strip())
+    await search_logic(client, message, message.text.strip())
 
 @Client.on_message(filters.command("search") & filters.private)
 async def search_command_handler(client, message):
     """Handle /search command for manga queries"""
+    user_id = message.from_user.id
+    
+    # Check authorization before search
+    from Plugins.helper import check_fsub
+    
+    # Check force subscribe
+    missing = await check_fsub(client, user_id)
+    if missing:
+        from pyrogram.types import InlineKeyboardButton
+        buttons = []
+        for ch in missing:
+            buttons.append([InlineKeyboardButton(f"Join {ch['title']}", url=ch['url'])])
+        buttons.append([InlineKeyboardButton("✅ Done", url=f"https://t.me/{client.me.username}?start=True")])
+        
+        await message.reply_text(
+            "<b>⚠️ You must join our channels to use this bot!</b>\n\n"
+            "Please join the channels below and try again.",
+            reply_markup=InlineKeyboardMarkup(buttons),
+            parse_mode=enums.ParseMode.HTML
+        )
+        return
+    
+    # Check if user is banned
+    if await Seishiro.is_user_banned(user_id):
+        await message.reply_text("🚫 **Access Denied**\n\nYou are banned from using this bot.")
+        return
+    
+    # Check if user is allowed
+    if user_id != Config.USER_ID and not await Seishiro.is_user_allowed(user_id):
+        await message.reply_text("🚫 **Access Denied**\n\nYou are not authorized to use this bot.\nContact the owner via @koushik_Sama to get access.")
+        return
+    
     parts = message.text.split(maxsplit=1)
     if len(parts) < 2:
         await message.reply("❌ usage: /search <query>")
         return
     
     query = parts[1].strip()
-    await search_logic(message, query)
+    await search_logic(client, message, query)
 
-async def search_logic(message, query):
+async def search_logic(client, message, query):
     if len(query) < 2:
         await message.reply("❌ query too short.")
         return
