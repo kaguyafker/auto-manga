@@ -2,7 +2,7 @@
 
 
 import logging
-import random
+import logging
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from Database.database import Seishiro
@@ -11,6 +11,28 @@ from Plugins.helper import edit_msg_with_pic
 
 logger = logging.getLogger(__name__)
 logger.info("PLUGIN LOAD: start.py loaded successfully")
+
+
+@Client.on_message(filters.command("let") & filters.private)
+async def let_user_handler(client, message):
+    if message.from_user.id != Config.USER_ID:
+        return
+    
+    try:
+        if len(message.command) < 2:
+            await message.reply("Usage: /let {user_id}")
+            return
+            
+        user_id = int(message.command[1])
+        if await Seishiro.add_allowed_user(user_id):
+            await message.reply(f"✅ User {user_id} has been allowed.")
+        else:
+            await message.reply("❌ Failed to allow user.")
+    except ValueError:
+        await message.reply("❌ Invalid User ID.")
+    except Exception as e:
+        logger.error(f"Let command error: {e}")
+        await message.reply(f"❌ Error: {e}")
 
 
 @Client.on_message(filters.command("start"), group=1)
@@ -57,57 +79,51 @@ async def start_msg(client, message):
             if await Seishiro.is_user_banned(message.from_user.id):
                 await message.reply_text("🚫 **access denied**\n\nyou are banned from using this bot.")
                 return
+                
+            if message.from_user.id != Config.USER_ID and not await Seishiro.is_user_allowed(message.from_user.id):
+                await message.reply_text("🚫 **Access Denied**\n\nYou are not authorized to use this bot.\nContact the owner via @koushik_Sama to get access.")
+                return
+
         except Exception as db_e:
-            logger.error(f"Database error (Ban Check): {db_e}")
+            logger.error(f"Database error (Ban/Auth Check): {db_e}")
 
         try:
             await Seishiro.add_user(client, message)
         except Exception as db_e:
             logger.error(f"Database error (Add User): {db_e}")
 
-        caption = (
-            f"<b>👋 hello {message.from_user.first_name}!</b>\n\n"
-            f"<blockquote><b>i am an advanced manga downloader & uploader bot. "
-            f"i can help you manage and automate your manga channel.</b></blockquote>\n\n"
-            f"<b><blockquote>🚀 features:</b>\n"
-            f"• auto-upload to channel\n"
-            f"• custom thumbnails\n"
-            f"• watermarking\n</blockquote>" 
-
-            f"<i>click the buttons below to control me!</i>"
+        text = (
+            f"<code>👋 hello {message.from_user.first_name}!</code>\n\n"
+            f"<code>i am an advanced manga downloader & uploader bot. "
+            f"i can help you manage and automate your manga channel.</code>\n\n"
+            f"<code>🚀 features:</code>\n"
+            f"<code>• auto-upload to channel</code>\n"
+            f"<code>• custom thumbnails</code>\n"
+            f"<code>• watermarking</code>\n\n" 
+            f"<code>click the buttons below to control me!</code>"
         )
         
-        if hasattr(Config, "PICS") and Config.PICS:
-            START_PIC = random.choice(Config.PICS)
-        else:
-            START_PIC = "https://ibb.co/Y7JxBDPp"
-
         buttons = InlineKeyboardMarkup([
             [
                 InlineKeyboardButton(" Settings", callback_data="settings_menu"),
                 InlineKeyboardButton(" Help", callback_data="help_menu")
             ],
             [
-                InlineKeyboardButton(" Official Channel", url="https://t.me/RexBots_Official"),
-                InlineKeyboardButton(" Developer", url="https://t.me/RexBots_Official")
+                InlineKeyboardButton(" Official Channel", url="https://t.me/koushik_Sama"),
+                InlineKeyboardButton(" Developer", url="https://t.me/koushik_Sama")
             ]
         ])
 
         try:
-            await message.reply_photo(
-                photo=START_PIC,
-                caption=caption,
-                reply_markup=buttons,
-                parse_mode=enums.ParseMode.HTML
-            )
-        except Exception as img_e:
-            logger.error(f"Image failed to load: {img_e}")
             await message.reply_text(
-                text=caption,
+                text=text,
                 reply_markup=buttons,
                 parse_mode=enums.ParseMode.HTML,
                 disable_web_page_preview=True
             )
+        except Exception as img_e:
+            logger.error(f"Failed to send menu: {img_e}")
+
     except Exception as e:
         logger.error(f"/start failed: {e}", exc_info=True)
         try:
@@ -120,16 +136,16 @@ async def start_msg(client, message):
 
 @Client.on_callback_query(filters.regex("^help_menu$"))
 async def help_menu(client, callback_query):
-    paraphrased = (
-        "<b>📚 How to Use</b>\n\n"
-        "• <b>Search Manga:</b> Just send me the manga name (e.g. `One Piece`) to begin.\n\n"
-        "• <b>Select Source:</b> Choose your preferred Language and Website from the options.\n\n"
-        "• <b>Download or Subscribe:</b> You can download individual chapters or Subscribe to get auto-updates when new chapters are released.\n\n"
-        "<b>📢 Updates Channel:</b> @RexBots_Official"
+    text = (
+        "<code>📚 How to Use</code>\n\n"
+        "<code>• Search Manga: Just send me the manga name (e.g. One Piece) to begin.</code>\n\n"
+        "<code>• Select Source: Choose your preferred Language and Website from the options.</code>\n\n"
+        "<code>• Download or Subscribe: You can download individual chapters or Subscribe to get auto-updates when new chapters are released.</code>\n\n"
+        "<code>📢 Updates Channel: @koushik_Sama</code>"
     )
     
     buttons = [[InlineKeyboardButton("🔙 back", callback_data="start_menu")]]
     
-    await edit_msg_with_pic(callback_query.message, paraphrased, InlineKeyboardMarkup(buttons))
+    await edit_msg_with_pic(callback_query.message, text, InlineKeyboardMarkup(buttons))
 
 

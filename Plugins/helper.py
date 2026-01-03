@@ -4,6 +4,7 @@
 from pyrogram import Client, filters, enums
 from config import Config
 from Database.database import Seishiro
+from pyrogram.types import InputMediaPhoto
 
 def admin_filter(filter, client, message):
     return message.from_user.id == Config.USER_ID or message.from_user.id in Seishiro.ADMINS
@@ -21,47 +22,53 @@ WAITING_CHAPTER_INPUT = "WAITING_CHAPTER_INPUT" # NEW
 
 def get_styled_text(text: str) -> str:
     """
-    Apply consistent styling: Italic and Blockquote.
-    HTML Format: <blockquote><i>text</i></blockquote>
+    Apply consistent styling: Monospace.
     """
-    return f"<blockquote><i>{text}</i></blockquote>"
+    return f"<code>{text}</code>"
 
 async def check_ban(user_id):
     return await Seishiro.is_user_banned(user_id)
 
-import random
-from pyrogram.types import InputMediaPhoto
-
-def get_random_pic():
-    if hasattr(Config, "PICS") and Config.PICS:
-        return random.choice(Config.PICS)
-    return "https://ibb.co/mVkSySr7"
-
-async def edit_msg_with_pic(message, text, buttons):
+async def edit_msg_with_pic(message, text, buttons, photo=None):
     """
-    Edits a Message with a new random photo and text.
-    If original Message has photo, uses edit_media.
-    Else, deletes and sends new photo.
+    Edits the message. 
+    If photo is provided, sends/edits with photo.
+    If no photo, ensures message is text-only (deletes old if it was media).
     """
-    pic = get_random_pic()
     try:
-        if message.photo:
-            await message.edit_media(
-                media=InputMediaPhoto(media=pic, caption=text),
-                reply_markup=buttons
-            )
+        if photo:
+            if message.photo:
+                await message.edit_media(
+                    media=InputMediaPhoto(media=photo, caption=text),
+                    reply_markup=buttons
+                )
+            else:
+                await message.delete()
+                await message.reply_photo(
+                    photo=photo,
+                    caption=text,
+                    reply_markup=buttons,
+                    parse_mode=enums.ParseMode.HTML
+                )
         else:
-            await message.delete()
-            await message.reply_photo(
-                photo=pic,
-                caption=text,
-                reply_markup=buttons,
-                parse_mode=enums.ParseMode.HTML
-            )
+            # We want text only
+            if message.photo or message.video or message.document:
+                await message.delete()
+                await message.reply_text(
+                    text=text,
+                    reply_markup=buttons,
+                    parse_mode=enums.ParseMode.HTML
+                )
+            else:
+                await message.edit_text(
+                    text=text,
+                    reply_markup=buttons,
+                    parse_mode=enums.ParseMode.HTML
+                )
     except Exception as e:
+        # Fallback if something goes wrong (e.g. message deleted)
         try:
-             await message.delete()
-             await message.reply_photo(pic, caption=text, reply_markup=buttons, parse_mode=enums.ParseMode.HTML)
+             await message.reply_text(text, reply_markup=buttons, parse_mode=enums.ParseMode.HTML)
         except:
              pass
 

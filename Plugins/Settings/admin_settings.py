@@ -18,7 +18,7 @@ async def admin_menu_cb(client, callback_query):
         return
 
     text = get_styled_text(
-        "<b>👮‍♂️ Admin Controls</b>\n\n"
+        "👮‍♂️ Admin Controls\n\n"
         "Manage bot administrators and other restricted settings."
     )
     
@@ -33,6 +33,9 @@ async def admin_menu_cb(client, callback_query):
         ],
         [
             InlineKeyboardButton("list admins ", callback_data="admin_list_btn"),
+            InlineKeyboardButton("allowed users 👥", callback_data="admin_allowed_list_btn")
+        ],
+        [
             InlineKeyboardButton("view watermark ", callback_data="admin_view_wm_btn")
         ],
          [
@@ -59,9 +62,9 @@ async def admin_menu_cb(client, callback_query):
 @Client.on_callback_query(filters.regex("^admin_add_btn$"))
 async def add_admin_btn_cb(client, callback_query):
     text = get_styled_text(
-        "<b>➕ Add Admin</b>\n\n"
-        "Send the <b>User ID</b> of the new admin.\n"
-        "<i>(Auto-close in 30s)</i>"
+        "➕ Add Admin\n\n"
+        "Send the User ID of the new admin.\n"
+        "(Auto-close in 30s)"
     )
     user_states[callback_query.from_user.id] = {"state": "waiting_add_admin"}
     buttons = [[InlineKeyboardButton("❌ cancel", callback_data="cancel_input")]]
@@ -71,9 +74,9 @@ async def add_admin_btn_cb(client, callback_query):
 @Client.on_callback_query(filters.regex("^admin_del_btn$"))
 async def del_admin_btn_cb(client, callback_query):
     text = get_styled_text(
-        "<b>➖ Remove Admin</b>\n\n"
-        "Send the <b>User ID</b> to remove.\n"
-        "<i>(Auto-close in 30s)</i>"
+        "➖ Remove Admin\n\n"
+        "Send the User ID to remove.\n"
+        "(Auto-close in 30s)"
     )
     user_states[callback_query.from_user.id] = {"state": "waiting_del_admin"}
     buttons = [[InlineKeyboardButton("❌ cancel", callback_data="cancel_input")]]
@@ -83,9 +86,9 @@ async def del_admin_btn_cb(client, callback_query):
 @Client.on_callback_query(filters.regex("^admin_ban_btn$"))
 async def ban_user_btn_cb(client, callback_query):
     text = get_styled_text(
-        "<b>🚫 Ban User</b>\n\n"
-        "Send the <b>User ID</b> to ban.\n"
-        "<i>(Auto-close in 30s)</i>"
+        "🚫 Ban User\n\n"
+        "Send the User ID to ban.\n"
+        "(Auto-close in 30s)"
     )
     user_states[callback_query.from_user.id] = {"state": "waiting_ban_id"}
     buttons = [[InlineKeyboardButton("❌ cancel", callback_data="cancel_input")]]
@@ -95,9 +98,9 @@ async def ban_user_btn_cb(client, callback_query):
 @Client.on_callback_query(filters.regex("^admin_unban_btn$"))
 async def unban_user_btn_cb(client, callback_query):
     text = get_styled_text(
-        "<b>✅ Unban User</b>\n\n"
-        "Send the <b>User ID</b> to unban.\n"
-        "<i>(Auto-close in 30s)</i>"
+        "✅ Unban User\n\n"
+        "Send the User ID to unban.\n"
+        "(Auto-close in 30s)"
     )
     user_states[callback_query.from_user.id] = {"state": "waiting_unban_id"}
     buttons = [[InlineKeyboardButton("❌ cancel", callback_data="cancel_input")]]
@@ -108,7 +111,7 @@ async def unban_user_btn_cb(client, callback_query):
 async def list_admins_cb(client, callback_query):
     try:
         admins = await Seishiro.get_admins()
-        list_text = f"<b>👮‍♂️ admin list:</b>\n\n"
+        list_text = f"👮‍♂️ admin list:\n\n"
         
         try:
              owner = await client.get_users(Config.user_id)
@@ -151,7 +154,7 @@ async def fsub_config_menu(client, callback_query):
         
     buttons.append([InlineKeyboardButton("⬅ back", callback_data="admin_menu_btn")])
         
-    await edit_msg_with_pic(callback_query.message, get_styled_text("<b>📢 FSub Configuration</b>\nTap to toggle Mode."), InlineKeyboardMarkup(buttons))
+    await edit_msg_with_pic(callback_query.message, get_styled_text("📢 FSub Configuration\nTap to toggle Mode."), InlineKeyboardMarkup(buttons))
 
 @Client.on_callback_query(filters.regex("^admin_view_wm_btn$"))
 async def view_wm_cb(client, callback_query):
@@ -159,14 +162,15 @@ async def view_wm_cb(client, callback_query):
         current_wm = await Seishiro.get_watermark()
         if current_wm:
             text = (
-                f"<b>💧 Current Watermark:</b>\n\n"
-                f"<b>Text:</b> `{current_wm['text']}`\n"
-                f"<b>Pos:</b> `{current_wm['position']}`\n"
-                f"<b>Col:</b> `{current_wm['color']}` | <b>Op:</b> `{current_wm['opacity']}`\n"
-                f"<b>Size:</b> `{current_wm['font_size']}`"
+            text = (
+                f"💧 Current Watermark:\n\n"
+                f"Text: {current_wm['text']}\n"
+                f"Pos: {current_wm['position']}\n"
+                f"Col: {current_wm['color']} | Op: {current_wm['opacity']}\n"
+                f"Size: {current_wm['font_size']}"
             )
         else:
-            text = "<b>💧 watermark:</b> not set"
+            text = "💧 watermark: not set"
             
         buttons = [[InlineKeyboardButton("⬅ back", callback_data="admin_menu_btn")]]
         await edit_msg_with_pic(callback_query.message, get_styled_text(text), InlineKeyboardMarkup(buttons))
@@ -176,9 +180,9 @@ async def view_wm_cb(client, callback_query):
 @Client.on_callback_query(filters.regex("^add_fsub_btn$"))
 async def add_fsub_btn_cb(client, callback_query):
     text = get_styled_text(
-        "<b>➕ Add Force-Sub Channel</b>\n\n"
-        "Send the <b>Channel ID</b> (bot must be admin there).\n"
-        "<i>(Auto-close in 30s)</i>"
+        "➕ Add Force-Sub Channel\n\n"
+        "Send the Channel ID (bot must be admin there).\n"
+        "(Auto-close in 30s)"
     )
     user_states[callback_query.from_user.id] = {"state": "waiting_fsub_id"} # Reuse existing state
     buttons = [[InlineKeyboardButton("❌ cancel", callback_data="cancel_input")]]
@@ -188,9 +192,9 @@ async def add_fsub_btn_cb(client, callback_query):
 @Client.on_callback_query(filters.regex("^rem_fsub_btn$"))
 async def rem_fsub_btn_cb(client, callback_query):
     text = get_styled_text(
-        "<b>➖ Remove Force-Sub Channel</b>\n\n"
-        "Send the <b>Channel ID</b> to remove.\n"
-        "<i>(Auto-close in 30s)</i>"
+        "➖ Remove Force-Sub Channel\n\n"
+        "Send the Channel ID to remove.\n"
+        "(Auto-close in 30s)"
     )
     user_states[callback_query.from_user.id] = {"state": "waiting_fsub_rem_id"} # Reuse existing state
     buttons = [[InlineKeyboardButton("❌ cancel", callback_data="cancel_input")]]
@@ -200,10 +204,10 @@ async def rem_fsub_btn_cb(client, callback_query):
 @Client.on_callback_query(filters.regex("^broadcast_btn$"))
 async def broadcast_btn_cb(client, callback_query):
     text = get_styled_text(
-        "<b>📢 Broadcast Message</b>\n\n"
+        "📢 Broadcast Message\n\n"
         "Send the Message you want to broadcast to all users.\n"
-        "<i>(Text, Photo, Video, Sticker, etc.)</i>\n"
-        "<i>(Auto-close in 30s)</i>"
+        "(Text, Photo, Video, Sticker, etc.)\n"
+        "(Auto-close in 30s)"
     )
     user_states[callback_query.from_user.id] = {"state": "waiting_broadcast_msg"}
     buttons = [[InlineKeyboardButton("❌ cancel", callback_data="cancel_input")]]
@@ -238,10 +242,10 @@ async def admin_channels_cb(client, callback_query):
             auto_text = "\n• None"
 
         text = get_styled_text(
-            f"<b>📺 Channel Configuration</b>\n\n"
-            f"<b>🗑️ Dump Channel:</b>\n➥ {dump_str}\n\n"
-            f"<b>📢 Update Channel:</b>\n➥ {update_str}\n\n"
-            f"<b>🤖 Auto-Update Channels:</b>{auto_text}"
+            f"📺 Channel Configuration\n\n"
+            f"🗑️ Dump Channel:\n➥ {dump_str}\n\n"
+            f"📢 Update Channel:\n➥ {update_str}\n\n"
+            f"🤖 Auto-Update Channels:{auto_text}"
         )
         
         buttons = [[InlineKeyboardButton("⬅ back", callback_data="admin_menu_btn")]]
@@ -251,3 +255,49 @@ async def admin_channels_cb(client, callback_query):
 
 
 
+
+@Client.on_callback_query(filters.regex("^admin_allowed_list_btn$"))
+async def allowed_list_cb(client, callback_query):
+    users = await Seishiro.get_allowed_users()
+    
+    buttons = []
+    
+    for uid in users:
+        try:
+            # Try to get user info if possible
+            try:
+                user = await client.get_chat(uid)
+                name = user.first_name or user.title
+            except:
+                name = "User"
+            
+            buttons.append([
+                InlineKeyboardButton(f"{name} ({uid})", callback_data="ignore"),
+                InlineKeyboardButton("❌ Remove", callback_data=f"rem_allow_{uid}")
+            ])
+        except Exception:
+             pass
+        
+    if not users:
+        buttons.append([InlineKeyboardButton("No allowed users found", callback_data="ignore")])
+        
+    buttons.append([InlineKeyboardButton("⬅ back", callback_data="admin_menu_btn")])
+    
+    await edit_msg_with_pic(
+        callback_query.message, 
+        get_styled_text("👥 Allowed Users List\n\nUsers who have access to the bot."),
+        InlineKeyboardMarkup(buttons)
+    )
+
+@Client.on_callback_query(filters.regex("^rem_allow_"))
+async def remove_allowed_cb(client, callback_query):
+    try:
+        uid = int(callback_query.data.split("_")[-1])
+        if await Seishiro.remove_allowed_user(uid):
+            await callback_query.answer(f"✅ Removed user {uid}", show_alert=True)
+            # Refresh list
+            await allowed_list_cb(client, callback_query)
+        else:
+             await callback_query.answer("❌ Failed to remove user", show_alert=True)
+    except Exception as e:
+         await callback_query.answer(f"Error: {e}", show_alert=True)

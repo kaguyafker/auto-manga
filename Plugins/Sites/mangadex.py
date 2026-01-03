@@ -71,6 +71,46 @@ class MangaDexAPI:
             logger.error(f"Failed to get manga info: {e}")
             return None
 
+    async def search_manga(self, query: str, limit: int = 10) -> List[Dict]:
+        try:
+            params = {
+                'title': query,
+                'limit': limit,
+                'includes[]': ['cover_art'],
+                'contentRating[]': ['safe', 'suggestive', 'erotica', 'pornographic']
+            }
+            data = await self.api_request('/manga', params)
+            if not data or data.get('result') != 'ok':
+                return []
+            
+            results = []
+            for manga in data.get('data', []):
+                attrs = manga['attributes']
+                title_obj = attrs.get('title', {})
+                title = title_obj.get('en')
+                if not title and title_obj:
+                    title = next(iter(title_obj.values()))
+                if not title:
+                     title = "Unknown Title"
+
+                cover_url = None
+                for rel in manga.get('relationships', []):
+                    if rel['type'] == 'cover_art':
+                        fileName = rel.get('attributes', {}).get('fileName')
+                        if fileName:
+                            cover_url = f"https://uploads.mangadex.org/covers/{manga['id']}/{fileName}.256.jpg"
+                        break
+                
+                results.append({
+                    'id': manga['id'],
+                    'title': title,
+                    'cover_url': cover_url
+                })
+            return results
+        except Exception as e:
+            logger.error(f"MangaDex search failed: {e}")
+            return []
+
     async def get_latest_chapters(self, offset: int = 0) -> List[Dict]:
         """
         Fetches latest chapters from the last 24 hours (or configured lookback).

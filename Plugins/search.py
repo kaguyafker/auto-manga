@@ -100,7 +100,15 @@ async def search_source_cb(client, callback_query):
     status_msg = await callback_query.message.edit_text(f"<i>🔍 Searching {source}...</i>", parse_mode=enums.ParseMode.HTML)
     
     async with API(Config) as api:
-        results = await api.search_manga(query)
+        try:
+            results = await api.search_manga(query)
+        except AttributeError:
+             await status_msg.edit_text(f"❌ search not implemented for {source}.")
+             return
+        except Exception as e:
+             logger.error(f"Search failed for {source}: {e}")
+             await status_msg.edit_text(f"❌ error searching {source}: {e}")
+             return
     
     if not results:
         await status_msg.edit_text(f"❌ no results found in {source}.")

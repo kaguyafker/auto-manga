@@ -607,6 +607,42 @@ class Master:
             logging.error(f"Error deleting caption: {e}")
             return False
 
+    async def add_allowed_user(self, user_id: int) -> bool:
+        try:
+            await self.database['allowed_users'].update_one(
+                {"_id": int(user_id)},
+                {"$set": {"_id": int(user_id), "added_at": datetime.utcnow()}},
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            logging.error(f"Error adding allowed user {user_id}: {e}")
+            return False
+
+    async def remove_allowed_user(self, user_id: int) -> bool:
+        try:
+            result = await self.database['allowed_users'].delete_one({"_id": int(user_id)})
+            return result.deleted_count > 0
+        except Exception as e:
+            logging.error(f"Error removing allowed user {user_id}: {e}")
+            return False
+
+    async def is_user_allowed(self, user_id: int) -> bool:
+        try:
+            user = await self.database['allowed_users'].find_one({"_id": int(user_id)})
+            return bool(user)
+        except Exception as e:
+            logging.error(f"Error checking allowed user {user_id}: {e}")
+            return False
+
+    async def get_allowed_users(self) -> List[int]:
+        try:
+            users = await self.database['allowed_users'].find({}).to_list(None)
+            return [u['_id'] for u in users]
+        except Exception as e:
+            logging.error(f"Error getting allowed users: {e}")
+            return []
+
 
     async def get_watermark(self) -> Optional[dict]:
         """Get the watermark configuration"""

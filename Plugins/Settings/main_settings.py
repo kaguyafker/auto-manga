@@ -54,9 +54,9 @@ async def settings_main_menu(client, callback_query):
         ]
         
         text = (
-            "<blockquote><b> Settings Menu (Page 1/2)</b></blockquote>\n\n"
-            "<blockquote>Select an option below to configure the bot. "
-            "All changes are saved instantly to the database.</blockquote>"
+            "<code>Settings Menu (Page 1/2)</code>\n\n"
+            "<code>Select an option below to configure the bot. "
+            "All changes are saved instantly to the database.</code>"
         )
 
         await edit_msg_with_pic(
@@ -115,11 +115,11 @@ async def settings_main_menu_2(client, callback_query):
         update_ch = await Seishiro.get_default_channel()
         
         text = (
-            "<blockquote><b>⚙️ Settings Menu (Page 2/2)</b></blockquote>\n\n"
-            f"<b>Current Channels:</b>\n"
-            f"🗑️ Dump: `{dump_ch if dump_ch else 'Not Set'}`\n"
-            f"📢 Update: `{update_ch if update_ch else 'Not Set'}`\n\n"
-            "<blockquote>Use arrows to navigate between pages.</blockquote>"
+            "<code>⚙️ Settings Menu (Page 2/2)</code>\n\n"
+            f"<code>Current Channels:</code>\n"
+            f"<code>🗑️ Dump: {dump_ch if dump_ch else 'Not Set'}</code>\n"
+            f"<code>📢 Update: {update_ch if update_ch else 'Not Set'}</code>\n\n"
+            "<code>Use arrows to navigate between pages.</code>"
         )
 
         await edit_msg_with_pic(
@@ -141,9 +141,9 @@ async def close_callback(client, callback_query):
 @Client.on_callback_query(filters.regex("^start_menu$"))
 async def start_menu_cb(client, callback_query):
     caption = (
-        f"<b>👋 Hello {callback_query.from_user.first_name}!</b>\n\n"
-        f"<blockquote>I am an advanced Manga Downloader & Uploader Bot.</blockquote>\n\n"
-        f"<i>Click the buttons below to control me!</i>"
+        f"<code>👋 Hello {callback_query.from_user.first_name}!</code>\n\n"
+        f"<code>I am an advanced Manga Downloader & Uploader Bot.</code>\n\n"
+        f"<code>Click the buttons below to control me!</code>"
     )
     buttons = InlineKeyboardMarkup([
         [
@@ -151,8 +151,8 @@ async def start_menu_cb(client, callback_query):
             InlineKeyboardButton(" Help", callback_data="help_menu")
         ],
         [
-            InlineKeyboardButton(" Official Channel", url="https://t.me/akaza7902"),
-            InlineKeyboardButton(" Developer", url="https://t.me/akaza7902")
+            InlineKeyboardButton(" Official Channel", url="https://t.me/koushik_Sama"),
+            InlineKeyboardButton(" Developer", url="https://t.me/koushik_Sama")
         ]
     ])
     await edit_msg_with_pic(callback_query.message, caption, buttons)
@@ -163,9 +163,9 @@ async def set_source_menu(client, callback_query):
     try:
         current = await Seishiro.get_config('manga_source', 'mangadex')
         text = (
-            "<b>📡 Select Manga Source</b>\n\n"
-            "<blockquote>Choose which source the bot should use for automatic updates and searching.</blockquote>\n\n"
-            f"<b>Current:</b> <code>{current}</code>"
+            "<code>📡 Select Manga Source</code>\n\n"
+            "<code>Choose which source the bot should use for automatic updates and searching.</code>\n\n"
+            f"<code>Current: {current}</code>"
         )
         
         buttons = [
