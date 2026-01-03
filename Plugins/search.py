@@ -1,5 +1,4 @@
 
-
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from config import Config
@@ -8,6 +7,7 @@ from Plugins.Sites.mangadex import MangaDexAPI
 from Plugins.Sites.mangaforest import MangaForestAPI
 from Database.database import Seishiro
 from Plugins.helper import edit_msg_with_pic, get_styled_text, user_states, user_data, WAITING_CHAPTER_INPUT
+from Plugins.logs_dump import log_activity, send_to_dump
 import logging
 import asyncio
 import shutil
@@ -151,6 +151,14 @@ async def search_logic(client, message, query):
         f"<b>🔍 search:</b> <code>{query}</code>\n\nselect a source to search in:",
         reply_markup=InlineKeyboardMarkup(buttons),
         parse_mode=enums.ParseMode.HTML
+    )
+    
+    # Log the search activity
+    await log_activity(
+        client,
+        "SEARCH",
+        f"<b>Query:</b> <code>{query}</code>\n<b>Sources Available:</b> {len([s for s in SITES.values() if s is not None])}",
+        message.from_user.id
     )
 
 
@@ -459,11 +467,33 @@ async def execute_download(client, target_chat_id, source, manga_id, chapter_id,
             await status_msg.edit_text(f"<i>⬆ uploading...</i>", parse_mode=enums.ParseMode.HTML)
             caption = f"<b>{meta['manga_title']} - Ch {meta['chapter']}</b>"
             
-            await client.send_document(
+            # Upload to target channel
+            uploaded_msg = await client.send_document(
                 chat_id=target_chat_id,
                 document=final_path,
                 caption=caption,
                 parse_mode=enums.ParseMode.HTML
+            )
+            
+            # Log the upload activity
+            await log_activity(
+                client,
+                "UPLOAD",
+                f"<b>Manga:</b> {meta['manga_title']}\n"
+                f"<b>Chapter:</b> {meta['chapter']}\n"
+                f"<b>Source:</b> {source}\n"
+                f"<b>Pages:</b> {len(images)}\n"
+                f"<b>File Type:</b> {file_type}\n"
+                f"<b>Target Channel:</b> <code>{target_chat_id}</code>",
+                status_chat_id if status_chat_id != target_chat_id else None
+            )
+            
+            # Send to dump channel for backup
+            await send_to_dump(
+                client,
+                uploaded_msg.document.file_id,
+                caption,
+                "document"
             )
             
             shutil.rmtree(chapter_dir, ignore_errors=True)

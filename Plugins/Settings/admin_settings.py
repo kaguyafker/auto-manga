@@ -216,6 +216,7 @@ async def broadcast_btn_cb(client, callback_query):
 @Client.on_callback_query(filters.regex("^admin_channels_btn$"))
 async def admin_channels_cb(client, callback_query):
     try:
+        log_id = await Seishiro.get_config("log_channel")
         dump_id = await Seishiro.get_config("dump_channel")
         update_id = await Seishiro.get_default_channel()
         auto_chs = await Seishiro.get_auto_update_channels()
@@ -228,6 +229,7 @@ async def admin_channels_cb(client, callback_query):
             except:
                 return f"Unknown (`{cid}`)"
 
+        log_str = await get_name(log_id)
         dump_str = await get_name(dump_id)
         update_str = await get_name(update_id)
         
@@ -242,9 +244,11 @@ async def admin_channels_cb(client, callback_query):
 
         text = get_styled_text(
             f"📺 Channel Configuration\n\n"
-            f"🗑️ Dump Channel:\n➥ {dump_str}\n\n"
+            f"📊 Log Channel:\n➥ {log_str}\n\n"
+            f"💾 Dump Channel:\n➥ {dump_str}\n\n"
             f"📢 Update Channel:\n➥ {update_str}\n\n"
-            f"🤖 Auto-Update Channels:{auto_text}"
+            f"🤖 Auto-Update Channels:{auto_text}\n\n"
+            f"<i>Use /setlogchannel, /setdumpchannel to configure</i>"
         )
         
         buttons = [[InlineKeyboardButton("⬅ back", callback_data="admin_menu_btn")]]
