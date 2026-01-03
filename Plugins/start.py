@@ -137,11 +137,21 @@ async def start_msg(client, message):
 @Client.on_callback_query(filters.regex("^help_menu$"))
 async def help_menu(client, callback_query):
     text = (
-        "<code>📚 How to Use</code>\n\n"
-        "<code>• Search Manga: Just send me the manga name (e.g. One Piece) to begin.</code>\n\n"
-        "<code>• Select Source: Choose your preferred Language and Website from the options.</code>\n\n"
-        "<code>• Download or Subscribe: You can download individual chapters or Subscribe to get auto-updates when new chapters are released.</code>\n\n"
-        "<code>📢 Updates Channel: @koushik_Sama</code>"
+        "<b>📚 How to Use Automatic Manga Bot</b>\n\n"
+        "<b>1️⃣ Search for Manga:</b>\n"
+        "Simply type the name of the manga you are looking for in this chat.\n"
+        "<i>Example:</i> <code>One Piece</code> or <code>Naruto</code>\n\n"
+        "<b>2️⃣ Select a Source:</b>\n"
+        "I will show you a list of websites where I found the manga. Click on a button to see results from that site.\n"
+        "<i>Supported Sites: MangaDex, MangaKakalot, etc.</i>\n\n"
+        "<b>3️⃣ Download Chapters:</b>\n"
+        "• <b>Single Chapter:</b> Click on a chapter number to download it immediately.\n"
+        "• <b>Custom Range:</b> Click 'Custom Download' to download multiple chapters at once (e.g., <code>10-50</code>).\n\n"
+        "<b>4️⃣ Subscriptions:</b>\n"
+        "Currently, subscriptions are managed automatically when you interact with a manga. (Check Settings for more options).\n\n"
+        "<b>💡 Problems?</b>\n"
+        "If a search fails, try a different source or check the spelling.\n\n"
+        "<i>📢 Dev: @koushik_Sama</i>"
     )
     
     buttons = [[InlineKeyboardButton("🔙 back", callback_data="start_menu")]]

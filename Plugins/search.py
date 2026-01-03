@@ -47,6 +47,9 @@ async def message_handler(client, message):
             await custom_dl_input_handler(client, message)
             return
         return
+    
+    # Text Search Implementation
+    await search_logic(message, message.text.strip())
 
 @Client.on_message(filters.command("search") & filters.private)
 async def search_command_handler(client, message):
@@ -57,6 +60,9 @@ async def search_command_handler(client, message):
         return
     
     query = parts[1].strip()
+    await search_logic(message, query)
+
+async def search_logic(message, query):
     if len(query) < 2:
         await message.reply("❌ query too short.")
         return
