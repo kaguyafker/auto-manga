@@ -8,8 +8,8 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from Database.database import Seishiro
 from config import Config
 from Plugins.helper import edit_msg_with_pic
-
-logger = logging.getLogger(__name__)
+from Plugins.logs_dump import log_activity
+import logging
 logger.info("PLUGIN LOAD: start.py loaded successfully")
 
 
@@ -113,6 +113,16 @@ async def start_msg(client, message):
                 InlineKeyboardButton(" Developer", url="https://t.me/koushik_Sama")
             ]
         ])
+
+        # Log the start activity
+        await log_activity(
+            client,
+            "USER",
+            f"👤 <b>Bot Started</b>\n"
+            f"<b>Name:</b> {message.from_user.first_name}\n"
+            f"<b>Username:</b> @{message.from_user.username if message.from_user.username else 'N/A'}",
+            message.from_user.id
+        )
 
         try:
             await message.reply_text(

@@ -6,6 +6,7 @@ from Database.database import Seishiro
 from Plugins.helper import user_states, get_styled_text
 from config import Config
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from Plugins.logs_dump import log_activity
 
 
 @Client.on_callback_query(filters.regex("^cancel_input$"))
@@ -34,6 +35,7 @@ async def settings_input_listener(client, message):
         if state == "waiting_caption":
             await Seishiro.set_caption(message.text)
             await message.reply(get_styled_text("✅ Caption Updated Successfully!"), parse_mode=enums.ParseMode.HTML)
+            await log_activity(client, "SETTINGS", f"📝 <b>Caption Updated</b>\n<code>{message.text}</code>", user_id)
             
             from Plugins.Settings.media_settings import set_caption_cb
             curr = await Seishiro.get_caption()
@@ -61,11 +63,13 @@ async def settings_input_listener(client, message):
         elif state == "waiting_format":
             await Seishiro.set_format(message.text)
             await message.reply(get_styled_text("✅ File Name Format Updated!"), parse_mode=enums.ParseMode.HTML)
+            await log_activity(client, "SETTINGS", f"📝 <b>Format Updated</b>\n<code>{message.text}</code>", user_id)
 
         elif state.startswith("waiting_banner_"):
             num = state.split("_")[-1]
             if message.photo:
                 await Seishiro.set_config(f"banner_image_{num}", message.photo.file_id)
+                await log_activity(client, "SETTINGS", f"🖼️ <b>Banner {num} Updated</b>", user_id)
                 
                 from Plugins.Settings.media_settings import get_banner_menu
                 text, markup = await get_banner_menu(Client)
@@ -79,6 +83,7 @@ async def settings_input_listener(client, message):
                 cid = int(message.text)
                 await Seishiro.set_default_channel(cid)
                 await message.reply(get_styled_text(f"✅ Upload Channel Set: {cid}"), parse_mode=enums.ParseMode.HTML)
+                await log_activity(client, "CHANNEL", f"⬆️ <b>Default Upload Channel Set</b>\n<code>{cid}</code>", user_id)
             except ValueError:
                 await message.reply("❌ invalid channel id. send a number like -100...")
                 return
@@ -88,6 +93,7 @@ async def settings_input_listener(client, message):
                 cid = int(message.text)
                 await Seishiro.set_config("dump_channel", cid)
                 await message.reply(get_styled_text(f"✅ Dump Channel Set: {cid}"), parse_mode=enums.ParseMode.HTML)
+                await log_activity(client, "CHANNEL", f"💾 <b>Dump Channel Set</b>\n<code>{cid}</code>", user_id)
             except ValueError:
                 await message.reply("❌ invalid id.")
                 return
@@ -103,6 +109,7 @@ async def settings_input_listener(client, message):
                     return
                 
                 await Seishiro.add_auto_update_channel(cid, title)
+                await log_activity(client, "CHANNEL", f"🤖 <b>Auto Update Channel Added</b>\n<b>Title:</b> {title}\n<b>ID:</b> <code>{cid}</code>", user_id)
                 
                 
                 curr_list = await Seishiro.get_auto_update_channels()
@@ -170,6 +177,7 @@ async def settings_input_listener(client, message):
                 
                 await Seishiro.add_fsub_channel(cid)
                 await message.reply(get_styled_text(f"✅ FSub Channel Added: {cid}"), parse_mode=enums.ParseMode.HTML)
+                await log_activity(client, "CHANNEL", f"📢 <b>FSub Channel Added</b>\n<code>{cid}</code>", user_id)
             except ValueError:
                 await message.reply("❌ invalid id.")
 
@@ -266,6 +274,7 @@ async def settings_input_listener(client, message):
                 new_admin_id = int(message.text)
                 await Seishiro.add_admin(new_admin_id)
                 await message.reply(get_styled_text(f"✅ User {new_admin_id} added as Admin."), parse_mode=enums.ParseMode.HTML)
+                await log_activity(client, "ADMIN", f"👑 <b>New Admin Added</b>\n<b>ID:</b> <code>{new_admin_id}</code>", user_id)
             except ValueError:
                 await message.reply("❌ invalid user id.")
             except Exception as e:
@@ -279,6 +288,7 @@ async def settings_input_listener(client, message):
                 else:
                     await Seishiro.remove_admin(del_id)
                     await message.reply(get_styled_text(f"✅ User {del_id} removed from Admins."), parse_mode=enums.ParseMode.HTML)
+                    await log_activity(client, "ADMIN", f"➖ <b>Admin Removed</b>\n<b>ID:</b> <code>{del_id}</code>", user_id)
             except ValueError:
                 await message.reply("❌ invalid user id.")
             except Exception as e:
@@ -306,11 +316,9 @@ async def settings_input_listener(client, message):
                             pass
                 
                 await status_msg.edit(
-                    f"✅ **broadcast complete**\n\n"
-                    f"👥 Total: {total}\n"
-                    f"✅ Sent: {successful}\n"
                     f"❌ Failed: {unsuccessful}"
                 )
+                await log_activity(client, "ADMIN", f"📢 <b>Broadcast Sent</b>\n<b>Total:</b> {total}\n<b>Success:</b> {successful}\n<b>Failed:</b> {unsuccessful}", user_id)
              except Exception as e:
                 await message.reply(f"❌ broadcast error: {e}")
 
@@ -322,6 +330,7 @@ async def settings_input_listener(client, message):
                 else:
                     if await Seishiro.ban_user(target_id):
                         await message.reply(get_styled_text(f"🚫 User {target_id} has been BANNED."), parse_mode=enums.ParseMode.HTML)
+                        await log_activity(client, "BAN", f"🚫 <b>User Banned</b>\n<b>ID:</b> <code>{target_id}</code>", user_id)
                     else:
                         await message.reply("❌ failed to ban user.")
             except ValueError:
@@ -332,6 +341,7 @@ async def settings_input_listener(client, message):
                 target_id = int(message.text)
                 if await Seishiro.unban_user(target_id):
                     await message.reply(get_styled_text(f"✅ User {target_id} has been UNBANNED."), parse_mode=enums.ParseMode.HTML)
+                    await log_activity(client, "UNBAN", f"✅ <b>User Unbanned</b>\n<b>ID:</b> <code>{target_id}</code>", user_id)
                 else:
                     await message.reply("❌ failed to unban user.")
             except ValueError:

@@ -28,6 +28,7 @@ from Plugins.Sites.mangakakalot import MangakakalotAPI
 from Plugins.Sites.allmanga import AllMangaAPI
 from Plugins.uploading import PyrogramHandler
 from Database.database import *
+from Plugins.logs_dump import log_activity, send_to_dump
 
 logging.basicConfig(
     level=logging.INFO,
@@ -395,7 +396,6 @@ class MangaDexBot:
                 if not target_dump:
                      logger.error("No Dump or Upload Channel configured for file storage!")
                      return False
-                     
                 
                 original_cid = self.telegram.channel_id
                 self.telegram.channel_id = target_dump
@@ -409,7 +409,31 @@ class MangaDexBot:
                 
                 if not file_id:
                     logger.error("Failed to upload to storage")
+                    await log_activity(
+                        self.telegram.app,
+                        "ERROR",
+                        f"❌ <b>Auto-Upload Failed</b>\n<b>Manga:</b> {manga_title}\n<b>Chapter:</b> {chapter_num}\n<b>Reason:</b> Failed to upload to storage"
+                    )
                     return False
+
+                # Log successful storage upload
+                await log_activity(
+                    self.telegram.app,
+                    "UPLOAD",
+                    f"<b>Manga:</b> {manga_title}\n"
+                    f"<b>Chapter:</b> {chapter_num}\n"
+                    f"<b>Source:</b> {source}\n"
+                    f"<b>Method:</b> Auto-Update\n"
+                    f"<b>Storage:</b> <code>{target_dump}</code>",
+                )
+
+                # Send to dump channel if different from storage and configured
+                await send_to_dump(
+                    self.telegram.app,
+                    file_id,
+                    storage_caption,
+                    "document"
+                )
 
                 await self.mark_chapter_uploaded(chapter_id, manga_id, manga_title, chapter_num, file_id)
                 await self.save_state()
