@@ -200,6 +200,3 @@ async def set_thumb_cb(client, callback_query):
     await callback_query.message.edit_text(text, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=enums.ParseMode.HTML)
     
     asyncio.create_task(timeout_handler(client, callback_query.message, callback_query.from_user.id, "waiting_thumb"))
-
-
-
