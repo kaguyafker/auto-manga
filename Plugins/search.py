@@ -158,14 +158,14 @@ async def search_logic(client, message, query):
         await message.reply(f"🔍 Debug: Found sources: {', '.join(available_sites)}")
 
         for source in available_sites:
-             # Simplify truncation: 64 bytes total. 
-             # "search_src_" (11) + Source (~12) = ~23 chars. 
-             # Flatten query to 30 chars max.
-             safe_query = query[:30]
-             
-             row.append(InlineKeyboardButton(source, callback_data=f"search_src_{source}_{safe_query}"))
+            # Simplify truncation: 64 bytes total. 
+            # "search_src_" (11) + Source (~12) = ~23 chars. 
+            # Flatten query to 30 chars max.
+            safe_query = query[:30]
             
-             if len(row) == 2:
+            row.append(InlineKeyboardButton(source, callback_data=f"search_src_{source}_{safe_query}"))
+            
+            if len(row) == 2:
                 buttons.append(row)
                 row = []
         

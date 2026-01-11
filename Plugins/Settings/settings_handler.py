@@ -342,7 +342,7 @@ async def settings_input_listener(client, message):
 
         elif state == "waiting_broadcast_msg":
             handled = True
-             try:
+            try:
                 status_msg = await message.reply("🚀 preparing broadcast...")
                 all_users = await Seishiro.get_all_users()
                 total = len(all_users)
@@ -363,10 +363,13 @@ async def settings_input_listener(client, message):
                             pass
                 
                 await status_msg.edit(
+                    f"✅ Broadcast Complete\n"
+                    f"<b>Total:</b> {total}\n"
+                    f"<b>Successful:</b> {successful}\n"
                     f"❌ Failed: {unsuccessful}"
                 )
                 await log_activity(client, "ADMIN", f"📢 <b>Broadcast Sent</b>\n<b>Total:</b> {total}\n<b>Success:</b> {successful}\n<b>Failed:</b> {unsuccessful}", user_id)
-             except Exception as e:
+            except Exception as e:
                 await message.reply(f"❌ broadcast error: {e}")
 
         elif state == "waiting_ban_id":
