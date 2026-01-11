@@ -42,7 +42,9 @@ def get_api_class(source):
 async def message_handler(client, message):
     try:
         user_id = message.from_user.id
-        logger.info(f"Search message received from {user_id}: {message.text}")
+        logger.info(f"Search message handler triggered for {user_id}: {message.text}")
+        if user_id == Config.USER_ID:
+             await message.reply(f"🔍 Debug: Message Handler Triggered: {message.text}")
         
         state_info = user_states.get(user_id)
         if isinstance(state_info, dict) and state_info.get("state") == WAITING_CHAPTER_INPUT:
@@ -92,7 +94,9 @@ async def message_handler(client, message):
 async def search_command_handler(client, message):
     try:
         user_id = message.from_user.id
-        logger.info(f"Search command received from {user_id}: {message.text}")
+        logger.info(f"Search command handler triggered for {user_id}: {message.text}")
+        if user_id == Config.USER_ID:
+             await message.reply(f"🔍 Debug: Command Handler Triggered")
         
         # Check authorization before search
         from Plugins.helper import check_fsub
@@ -140,17 +144,43 @@ async def search_logic(client, message, query):
         await message.reply("❌ query too short.")
         return
     
+    # DEBUG: Checkpoint 1
+    await message.reply(f"🔍 Debug: Search Logic for '{query}' started.")
+
+    MAX_CALLBACK_SIZE = 64
+    
     buttons = []
     row = []
-    for source in SITES.keys():
-        if SITES[source] is not None:
-            row.append(InlineKeyboardButton(source, callback_data=f"search_src_{source}_{query[:30]}"))
-            if len(row) == 2:  # 2 buttons per row
+    
+    try:
+        available_sites = [s for s in SITES.keys() if SITES[s] is not None]
+        # DEBUG: Checkpoint 2
+        await message.reply(f"🔍 Debug: Found sources: {', '.join(available_sites)}")
+
+        for source in available_sites:
+            prefix = f"search_src_{source}_"
+            start_len = len(prefix.encode('utf-8'))
+            remaining = MAX_CALLBACK_SIZE - start_len
+            
+            query_bytes = query.encode('utf-8')
+            if len(query_bytes) > remaining:
+                safe_query = query_bytes[:remaining].decode('utf-8', 'ignore')
+            else:
+                safe_query = query
+                
+            row.append(InlineKeyboardButton(source, callback_data=f"{prefix}{safe_query}"))
+            
+            if len(row) == 2:
                 buttons.append(row)
                 row = []
-    
-    if row:
-        buttons.append(row)
+        
+        if row:
+            buttons.append(row)
+            
+    except Exception as e:
+        logger.error(f"Error creating search buttons: {e}")
+        await message.reply(f"❌ Internal error creating search menu: {e}")
+        return
     
     if not buttons:
         await message.reply("❌ no sources available.")
@@ -158,11 +188,14 @@ async def search_logic(client, message, query):
         
     buttons.append([InlineKeyboardButton("❌ close", callback_data="stats_close")])
     
-    await message.reply(
-        f"<b>🔍 search:</b> <code>{query}</code>\n\nselect a source to search in:",
-        reply_markup=InlineKeyboardMarkup(buttons),
-        parse_mode=enums.ParseMode.HTML
-    )
+    try:
+        await message.reply(
+            f"<b>🔍 search:</b> <code>{query}</code>\n\nselect a source to search in:",
+            reply_markup=InlineKeyboardMarkup(buttons),
+            parse_mode=enums.ParseMode.HTML
+        )
+    except Exception as e:
+        await message.reply(f"❌ Fail to send menu: {e}")
     
     # Log the search activity
     await log_activity(
@@ -175,9 +208,12 @@ async def search_logic(client, message, query):
 
 @Client.on_callback_query(filters.regex("^search_src_"))
 async def search_source_cb(client, callback_query):
+    # DEBUG
+    await callback_query.message.reply("🔍 Debug: Source Callback Triggered")
+    
     parts = callback_query.data.split("_", 3)
     source = parts[2]
-    query = parts[3] # this might be truncated, but we used Message text in original. 
+    query = parts[3] 
     
     API = get_api_class(source)
     if not API:
@@ -189,6 +225,8 @@ async def search_source_cb(client, callback_query):
     async with API(Config) as api:
         try:
             results = await api.search_manga(query)
+            # DEBUG
+            await callback_query.message.reply(f"🔍 Debug: {source} returned {len(results) if results else 0} results")
         except AttributeError:
              await status_msg.edit_text(f"❌ search not implemented for {source}.")
              return
@@ -204,6 +242,10 @@ async def search_source_cb(client, callback_query):
     buttons = []
     for m in results[:10]: # top 10
         title = m['title']
+        # TRUNCATE TITLE for buttons
+        if len(title.encode('utf-8')) > 40:
+             title = title[:37] + "..."
+             
         buttons.append([InlineKeyboardButton(title, callback_data=f"view_{source}_{m['id']}")])
     
     buttons.append([InlineKeyboardButton("❌ close", callback_data="stats_close")])
