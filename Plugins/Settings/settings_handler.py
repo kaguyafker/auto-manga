@@ -42,7 +42,7 @@ async def settings_input_listener(client, message):
             handled = True
             await Seishiro.set_caption(message.text)
             await message.reply(get_styled_text("✅ Caption Updated Successfully!"), parse_mode=enums.ParseMode.HTML)
-            await log_activity(client, "SETTINGS", f"📝 <b>Caption Updated</b>\n<code>{message.text}</code>", user_id)
+            await log_activity(client, "SETTINGS", f"📝 <b>Caption Updated</b>\n{message.text}", user_id)
             
             from Plugins.Settings.media_settings import set_caption_cb
             curr = await Seishiro.get_caption()
@@ -71,7 +71,7 @@ async def settings_input_listener(client, message):
             handled = True
             await Seishiro.set_format(message.text)
             await message.reply(get_styled_text("✅ File Name Format Updated!"), parse_mode=enums.ParseMode.HTML)
-            await log_activity(client, "SETTINGS", f"📝 <b>Format Updated</b>\n<code>{message.text}</code>", user_id)
+            await log_activity(client, "SETTINGS", f"📝 <b>Format Updated</b>\n{message.text}", user_id)
 
         elif state.startswith("waiting_banner_"):
             handled = True
@@ -142,7 +142,7 @@ async def settings_input_listener(client, message):
                     return
                 
                 await Seishiro.add_auto_update_channel(cid, title)
-                await log_activity(client, "CHANNEL", f"🤖 <b>Auto Update Channel Added</b>\n<b>Title:</b> {title}\n<b>ID:</b> <code>{cid}</code>", user_id)
+                await log_activity(client, "CHANNEL", f"🤖 <b>Auto Update Channel Added</b>\n<b>Title:</b> {title}\n<b>ID:</b> {cid}", user_id)
                 
                 
                 curr_list = await Seishiro.get_auto_update_channels()
@@ -319,7 +319,7 @@ async def settings_input_listener(client, message):
                 new_admin_id = int(message.text)
                 await Seishiro.add_admin(new_admin_id)
                 await message.reply(get_styled_text(f"✅ User {new_admin_id} added as Admin."), parse_mode=enums.ParseMode.HTML)
-                await log_activity(client, "ADMIN", f"👑 <b>New Admin Added</b>\n<b>ID:</b> <code>{new_admin_id}</code>", user_id)
+                await log_activity(client, "ADMIN", f"👑 <b>New Admin Added</b>\n<b>ID:</b> {new_admin_id}", user_id)
             except ValueError:
                 await message.reply("❌ invalid user id.")
             except Exception as e:
@@ -381,7 +381,7 @@ async def settings_input_listener(client, message):
                 else:
                     if await Seishiro.ban_user(target_id):
                         await message.reply(get_styled_text(f"🚫 User {target_id} has been BANNED."), parse_mode=enums.ParseMode.HTML)
-                        await log_activity(client, "BAN", f"🚫 <b>User Banned</b>\n<b>ID:</b> <code>{target_id}</code>", user_id)
+                        await log_activity(client, "BAN", f"🚫 <b>User Banned</b>\n<b>ID:</b> {target_id}", user_id)
                     else:
                         await message.reply("❌ failed to ban user.")
             except ValueError:

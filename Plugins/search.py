@@ -185,7 +185,7 @@ async def search_logic(client, message, query):
     
     try:
         await message.reply(
-            f"<b>🔍 search:</b> <code>{query}</code>\n\nselect a source to search in:",
+            f"<b>🔍 search:</b> {query}\n\nselect a source to search in:",
             reply_markup=InlineKeyboardMarkup(buttons),
             parse_mode=enums.ParseMode.HTML
         )
@@ -196,7 +196,7 @@ async def search_logic(client, message, query):
     await log_activity(
         client,
         "SEARCH",
-        f"<b>Query:</b> <code>{query}</code>\n<b>Sources Available:</b> {len([s for s in SITES.values() if s is not None])}",
+        f"<b>Query:</b> {query}\n<b>Sources Available:</b> {len([s for s in SITES.values() if s is not None])}",
         message.from_user.id
     )
 
@@ -271,7 +271,7 @@ async def view_manga_cb(client, callback_query):
     caption = (
         f"<b>📖 {info['title']}</b>\n"
         f"<b>Source:</b> {source}\n"
-        f"<b>ID:</b> <code>{manga_id}</code>\n\n"
+        f"<b>ID:</b> {manga_id}\n\n"
         f"Select an option:"
     )
     
@@ -362,8 +362,8 @@ async def custom_dl_start_cb(client, callback_query):
         "Please enter the Chapter Number you want to download.\n"
         "You can download a single chapter or a range.\n\n"
         "<b>Examples:</b>\n"
-        "<code>5</code> (Download Chapter 5)\n"
-        "<code>10-20</code> (Download Chapters 10 to 20)\n\n"
+        "5 (Download Chapter 5)\n"
+        "10-20 (Download Chapters 10 to 20)\n\n"
         "<i>Downloads will be sent to your Private Chat.</i>",
         parse_mode=enums.ParseMode.HTML
     )

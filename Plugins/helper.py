@@ -25,7 +25,7 @@ def get_styled_text(text: str) -> str:
     """
     Apply consistent styling: Monospace.
     """
-    return f"<code>{text}</code>"
+    return text
 
 async def check_ban(user_id):
     return await Seishiro.is_user_banned(user_id)

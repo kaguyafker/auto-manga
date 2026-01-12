@@ -22,8 +22,8 @@ async def set_log_channel(client, message):
     if len(parts) < 2:
         await message.reply(
             "<b>📝 Set Log Channel</b>\n\n"
-            "<b>Usage:</b> <code>/setlogchannel [channel_id]</code>\n\n"
-            "<b>Example:</b> <code>/setlogchannel -1001234567890</code>\n\n"
+            "<b>Usage:</b> /setlogchannel [channel_id]\n\n"
+            "<b>Example:</b> /setlogchannel -1001234567890\n\n"
             "<i>💡 Forward a message from the channel to get its ID</i>",
             parse_mode=enums.ParseMode.HTML
         )
@@ -47,7 +47,7 @@ async def set_log_channel(client, message):
             await message.reply(
                 f"✅ <b>Log Channel Set!</b>\n\n"
                 f"<b>Channel:</b> {chat.title}\n"
-                f"<b>ID:</b> <code>{channel_id}</code>\n\n"
+                f"<b>ID:</b> {channel_id}\n\n"
                 f"<i>All bot activities will be logged here.</i>",
                 parse_mode=enums.ParseMode.HTML
             )
@@ -101,8 +101,8 @@ async def set_dump_channel(client, message):
     if len(parts) < 2:
         await message.reply(
             "<b>💾 Set Dump Channel</b>\n\n"
-            "<b>Usage:</b> <code>/setdumpchannel [channel_id]</code>\n\n"
-            "<b>Example:</b> <code>/setdumpchannel -1001234567890</code>\n\n"
+            "<b>Usage:</b> /setdumpchannel [channel_id]\n\n"
+            "<b>Example:</b> /setdumpchannel -1001234567890\n\n"
             "<i>💡 This channel will store backup copies of all uploaded files</i>",
             parse_mode=enums.ParseMode.HTML
         )
@@ -126,7 +126,7 @@ async def set_dump_channel(client, message):
             await message.reply(
                 f"✅ <b>Dump Channel Set!</b>\n\n"
                 f"<b>Channel:</b> {chat.title}\n"
-                f"<b>ID:</b> <code>{channel_id}</code>\n\n"
+                f"<b>ID:</b> {channel_id}\n\n"
                 f"<i>All uploaded files will be backed up here.</i>",
                 parse_mode=enums.ParseMode.HTML
             )

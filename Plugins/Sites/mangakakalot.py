@@ -22,10 +22,10 @@ class MangakakalotAPI:
             'Accept-Language': 'en-US,en;q=0.5',
         }
 
-    async def aenter(self):
+    async def __aenter__(self):
         return self
 
-    async def aexit(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         pass
 
     def parse_upload_hours_ago(self, time_text: str) -> Optional[float]:
@@ -227,7 +227,7 @@ class MangakakalotAPI:
 
     async def search_manga(self, query: str, limit: int = 10) -> List[Dict]:
         results = []
-        search_url = f"{self.base_url}/search/{query.replace(' ', '_')}"
+        search_url = f"{self.base_url}/search/story/{query.replace(' ', '_')}"
         async with aiohttp.ClientSession(headers=self.headers) as session:
             try:
                 async with session.get(search_url, timeout=60) as resp:
@@ -238,10 +238,29 @@ class MangakakalotAPI:
 
                     items = soup.find_all('div', class_='story_item')[:limit]
                     for item in items:
-                        a_tag = item.find('a')
+                        # Find title: usually in h3 with class story_item_title
+                        title_node = item.find('h3', class_='story_item_title')
+                        if title_node:
+                             a_tag = title_node.find('a')
+                        else:
+                             # Fallback: find any a tag that isn't just an image
+                             a_tag = item.find('a')
+                        
                         if not a_tag:
                             continue
+
                         title = a_tag.get('title') or a_tag.get_text(strip=True)
+                        if not title:
+                             # Try getting title from img alt if available in the item
+                             img_chk = item.find('img')
+                             if img_chk: title = img_chk.get('alt')
+                        
+                        if title:
+                            title = title.split('\n')[0].strip()
+                            # Remove potential junk like 'class=' if it leaked into text
+                            if 'class=' in title:
+                                title = title.split('class=')[0].strip()
+                        
                         href = a_tag['href']
                         img = item.find('img')
                         cover = img['src'] if img and img.get('src') else None

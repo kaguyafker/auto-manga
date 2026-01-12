@@ -90,14 +90,14 @@ async def start_msg(client, message):
             logger.error(f"Database error (Add User): {db_e}")
 
         text = (
-            f"<code>👋 hello {message.from_user.first_name}!</code>\n\n"
-            f"<code>i am an advanced manga downloader & uploader bot. "
-            f"i can help you manage and automate your manga channel.</code>\n\n"
-            f"<code>🚀 features:</code>\n"
-            f"<code>• auto-upload to channel</code>\n"
-            f"<code>• custom thumbnails</code>\n"
-            f"<code>• watermarking</code>\n\n" 
-            f"<code>click the buttons below to control me!</code>"
+            f"👋 hello {message.from_user.first_name}!\n\n"
+            f"i am an advanced manga downloader & uploader bot. "
+            f"i can help you manage and automate your manga channel.\n\n"
+            f"🚀 features:\n"
+            f"• auto-upload to channel\n"
+            f"• custom thumbnails\n"
+            f"• watermarking\n\n" 
+            f"click the buttons below to control me!"
         )
         
         buttons = InlineKeyboardMarkup([
@@ -147,13 +147,13 @@ async def help_menu(client, callback_query):
         "<b>📚 How to Use Automatic Manga Bot</b>\n\n"
         "<b>1️⃣ Search for Manga:</b>\n"
         "Simply type the name of the manga you are looking for in this chat.\n"
-        "<i>Example:</i> <code>One Piece</code> or <code>Naruto</code>\n\n"
+        "<i>Example:</i> One Piece or Naruto\n\n"
         "<b>2️⃣ Select a Source:</b>\n"
         "I will show you a list of websites where I found the manga. Click on a button to see results from that site.\n"
         "<i>Supported Sites: MangaDex, MangaKakalot, etc.</i>\n\n"
         "<b>3️⃣ Download Chapters:</b>\n"
         "• <b>Single Chapter:</b> Click on a chapter number to download it immediately.\n"
-        "• <b>Custom Range:</b> Click 'Custom Download' to download multiple chapters at once (e.g., <code>10-50</code>).\n\n"
+        "• <b>Custom Range:</b> Click 'Custom Download' to download multiple chapters at once (e.g., 10-50).\n\n"
         "<b>4️⃣ Subscriptions:</b>\n"
         "Currently, subscriptions are managed automatically when you interact with a manga. (Check Settings for more options).\n\n"
         "<b>💡 Problems?</b>\n"
