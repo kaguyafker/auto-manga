@@ -38,6 +38,29 @@ def get_api_class(source):
     return SITES.get(source)
 
 
+async def search_single_source(source: str, query: str):
+    """
+    Search a single source and return results, or empty list on error.
+    Returns: List of manga dictionaries or empty list
+    """
+    try:
+        API = get_api_class(source)
+        if not API:
+            logger.warning(f"Source {source} has no API class")
+            return []
+        
+        async with API(Config) as api:
+            if not hasattr(api, 'search_manga'):
+                logger.warning(f"Source {source} does not implement search_manga")
+                return []
+            
+            results = await api.search_manga(query)
+            return results if results else []
+    except Exception as e:
+        logger.error(f"Search failed for {source}: {e}")
+        return []
+
+
 @Client.on_message(filters.text & filters.private & ~filters.command(["start", "help", "settings", "search"]))
 async def message_handler(client, message):
     try:
@@ -140,116 +163,103 @@ async def search_command_handler(client, message):
         await message.reply(f"❌ search error: {e}")
 
 async def search_logic(client, message, query):
+    """
+    Search all sources concurrently and display results grouped by source.
+    """
     if len(query) < 2:
-        await message.reply("❌ query too short.")
+        await message.reply("❌ Query too short. Please enter at least 2 characters.")
         return
     
-    # DEBUG: Checkpoint 1
-    await message.reply(f"🔍 Debug: Search Logic for '{query}' started.")
-
-    MAX_CALLBACK_SIZE = 64
-    
-    buttons = []
-    row = []
-    
-    try:
-        available_sites = [s for s in SITES.keys() if SITES[s] is not None]
-        # DEBUG: Checkpoint 2
-        await message.reply(f"🔍 Debug: Found sources: {', '.join(available_sites)}")
-
-        for source in available_sites:
-            # Simplify truncation: 64 bytes total. 
-            # "search_src_" (11) + Source (~12) = ~23 chars. 
-            # Flatten query to 30 chars max.
-            safe_query = query[:30]
-            
-            row.append(InlineKeyboardButton(source, callback_data=f"search_src_{source}_{safe_query}"))
-            
-            if len(row) == 2:
-                buttons.append(row)
-                row = []
-        
-        if row:
-            buttons.append(row)
-            
-    except Exception as e:
-        logger.error(f"Error creating search buttons: {e}")
-        await message.reply(f"❌ Internal error creating search menu: {e}")
-        return
-    
-    if not buttons:
-        await message.reply("❌ no sources available.")
-        return
-        
-    buttons.append([InlineKeyboardButton("❌ close", callback_data="stats_close")])
-    
-    try:
-        await message.reply(
-            f"<b>🔍 search:</b> {query}\n\nselect a source to search in:",
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML
-        )
-    except Exception as e:
-        await message.reply(f"❌ Fail to send menu: {e}")
-    
-    # Log the search activity
-    await log_activity(
-        client,
-        "SEARCH",
-        f"<b>Query:</b> {query}\n<b>Sources Available:</b> {len([s for s in SITES.values() if s is not None])}",
-        message.from_user.id
-    )
-
-
-@Client.on_callback_query(filters.regex("^search_src_"))
-async def search_source_cb(client, callback_query):
-    # DEBUG
-    await callback_query.message.reply("🔍 Debug: Source Callback Triggered")
-    
-    parts = callback_query.data.split("_", 3)
-    source = parts[2]
-    query = parts[3] 
-    
-    API = get_api_class(source)
-    if not API:
-        await callback_query.answer("source not available", show_alert=True)
-        return
-        
-    status_msg = await callback_query.message.edit_text(f"<i>🔍 Searching {source}...</i>", parse_mode=enums.ParseMode.HTML)
-    
-    async with API(Config) as api:
-        try:
-            results = await api.search_manga(query)
-            # DEBUG
-            await callback_query.message.reply(f"🔍 Debug: {source} returned {len(results) if results else 0} results")
-        except AttributeError:
-             await status_msg.edit_text(f"❌ search not implemented for {source}.")
-             return
-        except Exception as e:
-             logger.error(f"Search failed for {source}: {e}")
-             await status_msg.edit_text(f"❌ error searching {source}: {e}")
-             return
-    
-    if not results:
-        await status_msg.edit_text(f"❌ no results found in {source}.")
-        return
-
-    buttons = []
-    for m in results[:10]: # top 10
-        title = m['title']
-        # TRUNCATE TITLE for buttons
-        if len(title.encode('utf-8')) > 40:
-             title = title[:37] + "..."
-             
-        buttons.append([InlineKeyboardButton(title, callback_data=f"view_{source}_{m['id']}")])
-    
-    buttons.append([InlineKeyboardButton("❌ close", callback_data="stats_close")])
-    
-    await status_msg.edit_text(
-        f"<b>found {len(results)} results in {source}:</b>",
-        reply_markup=InlineKeyboardMarkup(buttons),
+    # Show searching status
+    status_msg = await message.reply(
+        f"<b>🔍 Searching all sources for:</b> {query}\n\n<i>⏳ Please wait...</i>",
         parse_mode=enums.ParseMode.HTML
     )
+    
+    try:
+        # Get all available sources
+        available_sites = [s for s in SITES.keys() if SITES[s] is not None]
+        
+        if not available_sites:
+            await status_msg.edit_text("❌ No sources available.")
+            return
+        
+        # Search all sources concurrently
+        logger.info(f"Searching {len(available_sites)} sources for: {query}")
+        search_tasks = [search_single_source(source, query) for source in available_sites]
+        results_by_source = await asyncio.gather(*search_tasks, return_exceptions=True)
+        
+        # Build inline buttons from results
+        buttons = []
+        total_results = 0
+        results_summary = {}
+        
+        for source, results in zip(available_sites, results_by_source):
+            if isinstance(results, Exception):
+                logger.error(f"Exception from {source}: {results}")
+                results_summary[source] = 0
+                continue
+            
+            if not results or len(results) == 0:
+                results_summary[source] = 0
+                continue
+            
+            # Take top 5 results per source
+            source_results = results[:5]
+            results_summary[source] = len(source_results)
+            
+            for manga in source_results:
+                # Truncate title to fit in button (max 64 bytes for callback_data)
+                title = manga['title'][:35].strip()
+                if len(manga['title']) > 35:
+                    title += "..."
+                
+                button_text = f"{source}: {title}"
+                
+                # Ensure manga_id is safe for callback data
+                manga_id = str(manga['id'])[:20]  # Limit ID length
+                
+                buttons.append([InlineKeyboardButton(
+                    button_text,
+                    callback_data=f"view_{source}_{manga_id}"
+                )])
+                total_results += 1
+        
+        # Add close button
+        buttons.append([InlineKeyboardButton("❌ Close", callback_data="stats_close")])
+        
+        # Display results
+        if total_results == 0:
+            summary_text = "\n".join([f"• {s}: 0 results" for s in available_sites])
+            await status_msg.edit_text(
+                f"<b>❌ No results found for:</b> {query}\n\n{summary_text}",
+                parse_mode=enums.ParseMode.HTML
+            )
+        else:
+            summary_text = "\n".join([
+                f"• {s}: {results_summary.get(s, 0)} result(s)" 
+                for s in available_sites if results_summary.get(s, 0) > 0
+            ])
+            await status_msg.edit_text(
+                f"<b>✅ Found {total_results} results for:</b> {query}\n\n{summary_text}\n\n<i>Select a manga to view chapters:</i>",
+                reply_markup=InlineKeyboardMarkup(buttons),
+                parse_mode=enums.ParseMode.HTML
+            )
+        
+        # Log the search activity
+        await log_activity(
+            client,
+            "SEARCH",
+            f"<b>Query:</b> {query}\n<b>Total Results:</b> {total_results}\n<b>Sources Searched:</b> {len(available_sites)}",
+            message.from_user.id
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in search_logic: {e}", exc_info=True)
+        await status_msg.edit_text(f"❌ Search error: {e}")
+
+
+# Removed search_source_cb - no longer needed as we search all sources simultaneously
 
 
 @Client.on_callback_query(filters.regex("^view_"))
@@ -329,7 +339,7 @@ async def chapters_list_cb(client, callback_query):
     
     buttons.append([InlineKeyboardButton("⬅ back to manga", callback_data=f"view_{source}_{manga_id}")])
     
-    caption_text = f"<b>select chapter to download (standard):</b>\npage: {int(offset/10)+1}\n<i>note: uploads to default channel.</i>"
+    caption_text = f"<b>select chapter to download (standard):</b>\n<b>Source:</b> {source}\npage: {int(offset/10)+1}\n<i>note: uploads to default channel.</i>"
     
     try:
         if callback_query.message.photo:
