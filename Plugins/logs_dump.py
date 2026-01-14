@@ -321,4 +321,58 @@ async def send_to_dump(client, file_id: str, caption: str = None, file_type: str
         
     except Exception as e:
         logger.error(f"Failed to send to dump channel: {e}")
-        return None
+
+# Unified Administrative Shortcuts
+@Client.on_message(filters.command("set") & filters.private)
+async def unified_set_handler(client, message):
+    """Unified handler for setting log or dump channels"""
+    if message.from_user.id != Config.USER_ID:
+        return
+    
+    args = message.text.split()
+    if len(args) < 3:
+        usage = (
+            "<b>⚙️ Unified Settings</b>\n\n"
+            "<b>Usage:</b>\n"
+            "• <code>/set log -100...</code>\n"
+            "• <code>/set dump -100...</code>\n\n"
+            "<i>💡 Use numeric channel IDs.</i>"
+        )
+        await message.reply_text(usage, parse_mode=enums.ParseMode.HTML)
+        return
+    
+    target = args[1].lower()
+    value = args[2]
+    
+    # Fake message to call existing handlers
+    message.text = f"/set{target}channel {value}"
+    if target == "log":
+        await set_log_channel(client, message)
+    elif target == "dump":
+        await set_dump_channel(client, message)
+    else:
+        await message.reply_text("❌ Invalid target. Use 'log' or 'dump'.")
+
+@Client.on_message(filters.command("rem") & filters.private)
+async def unified_rem_handler(client, message):
+    """Unified handler for removing log or dump channels"""
+    if message.from_user.id != Config.USER_ID:
+        return
+    
+    args = message.text.split()
+    if len(args) < 2:
+        await message.reply_text("<b>Usage:</b> <code>/rem log</code> or <code>/rem dump</code>", parse_mode=enums.ParseMode.HTML)
+        return
+    
+    target = args[1].lower()
+    if target == "log":
+        await remove_log_channel(client, message)
+    elif target == "dump":
+        await remove_dump_channel(client, message)
+    else:
+        await message.reply_text("❌ Invalid target. Use 'log' or 'dump'.")
+
+@Client.on_message(filters.command("channels") & filters.private)
+async def channels_shortcut(client, message):
+    """Shortcut for viewing all configured channels"""
+    await view_channels(client, message)

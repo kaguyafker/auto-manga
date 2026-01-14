@@ -12,6 +12,7 @@ import shutil
 import os
 import re
 import traceback
+import hashlib
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -56,6 +57,35 @@ except Exception:
 def get_api_class(source):
     return SITES.get(source)
 
+def get_manga_id_for_cb(source, full_id, user_id, prefix="view"):
+    """
+    Returns an ID safe for callback data. Hashed if needed.
+    """
+    full_cb = f"{prefix}_{source}_{full_id}"
+    if len(full_cb) <= 64:
+        return full_id
+    
+    # Hash it
+    short_hash = hashlib.md5(full_id.encode()).hexdigest()[:12]
+    
+    # Store mapping
+    if user_id not in user_data:
+        user_data[user_id] = {}
+    if 'id_map' not in user_data[user_id]:
+        user_data[user_id]['id_map'] = {}
+    
+    user_data[user_id]['id_map'][short_hash] = full_id
+    return f"h:{short_hash}"
+
+def resolve_manga_id(manga_id, user_id):
+    """
+    Resolves hashed ID to full ID.
+    """
+    if str(manga_id).startswith("h:"):
+        short_hash = manga_id[2:]
+        return user_data.get(user_id, {}).get('id_map', {}).get(short_hash)
+    return manga_id
+
 
 async def search_single_source(source: str, query: str):
     """
@@ -90,7 +120,7 @@ async def search_single_source(source: str, query: str):
         return []
 
 
-@Client.on_message(filters.text & filters.private & ~filters.command(["start", "help", "settings", "search", "ping", "id", "load", "sites", "version"]), group=2)
+@Client.on_message(filters.text & filters.private & ~filters.regex("^/") & ~filters.command(["start", "help", "settings", "search", "ping", "id", "load", "sites", "version"]), group=2)
 async def message_handler(client, message):
     try:
         user_id = message.from_user.id
@@ -247,15 +277,16 @@ async def search_logic(client, message, query):
             logger.info(f"Processing {len(source_results)} results from {source}")
             
             for manga in source_results:
-                # Truncate title to fit in button (max 64 bytes for callback_data)
+                # Truncate title to fit in button
                 title = str(manga.get('title', 'Unknown'))[:35].strip()
                 if len(str(manga.get('title', 'Unknown'))) > 35:
                     title += "..."
                 
                 button_text = f"{source}: {title}"
                 
-                # Ensure manga_id is safe for callback data
-                manga_id = str(manga.get('id', ''))[:25]  # Limit ID length
+                # Get the true ID
+                full_id = str(manga.get('id', ''))
+                manga_id = get_manga_id_for_cb(source, full_id, user_id)
                 
                 buttons.append([InlineKeyboardButton(
                     button_text,
@@ -307,12 +338,17 @@ async def search_logic(client, message, query):
 async def view_manga_cb(client, callback_query):
     parts = callback_query.data.split("_", 2)
     source = parts[1]
-    manga_id = parts[2]
+    user_id = callback_query.from_user.id
+    manga_id = resolve_manga_id(parts[2], user_id)
     
-    api = get_api_class(source)
-    if not api: return
+    if not manga_id:
+        await callback_query.answer("❌ Session expired or invalid ID. Please search again.", show_alert=True)
+        return
+    
+    api_class = get_api_class(source)
+    if not api_class: return
 
-    async with api(Config) as api:
+    async with api_class(Config) as api:
         info = await api.get_manga_info(manga_id)
     
     if not info:
@@ -326,9 +362,13 @@ async def view_manga_cb(client, callback_query):
         f"Select an option:"
     )
     
+    # Prepare IDs for buttons
+    cb_manga_id_chapters = get_manga_id_for_cb(source, manga_id, user_id, prefix="chapters")
+    cb_manga_id_custom = get_manga_id_for_cb(source, manga_id, user_id, prefix="custom_dl")
+    
     buttons = [
-        [InlineKeyboardButton("⬇ download chapters", callback_data=f"chapters_{source}_{manga_id}_0")],
-        [InlineKeyboardButton("⬇ custom download (range)", callback_data=f"custom_dl_{source}_{manga_id}")],
+        [InlineKeyboardButton("⬇ download chapters", callback_data=f"chapters_{source}_{cb_manga_id_chapters}_0")],
+        [InlineKeyboardButton("⬇ custom download (range)", callback_data=f"custom_dl_{source}_{cb_manga_id_custom}")],
         [InlineKeyboardButton("❌ close", callback_data="stats_close")] 
     ]
     
@@ -345,9 +385,14 @@ async def chapters_list_cb(client, callback_query):
         return
     
     source = parts[1]
-    offset = int(parts[-1])  # Last part is always offset
-    manga_id = "_".join(parts[2:-1])  # Everything between source and offset
-    
+    offset = int(parts[-1])
+    user_id = callback_query.from_user.id
+    manga_id = resolve_manga_id("_".join(parts[2:-1]), user_id)
+
+    if not manga_id:
+        await callback_query.answer("❌ Session expired. Please search again.", show_alert=True)
+        return
+        
     API = get_api_class(source)
     async with API(Config) as api:
         chapters = await api.get_manga_chapters(manga_id, limit=10, offset=offset)
@@ -361,12 +406,18 @@ async def chapters_list_cb(client, callback_query):
 
     buttons = []
     row = []
+    # Safe ID for chapter/view callbacks
+    safe_manga_id_dl = get_manga_id_for_cb(source, manga_id, user_id, "dl_ask")
+    safe_manga_id_nav = get_manga_id_for_cb(source, manga_id, user_id, "chapters")
+    safe_manga_id_view = get_manga_id_for_cb(source, manga_id, user_id, "view")
+
     for ch in chapters:
         ch_num = ch['chapter']
         btn_text = f"ch {ch_num}"
         
-        
-        row.append(InlineKeyboardButton(btn_text, callback_data=f"dl_ask_{source}_{manga_id}_{ch['id'][:20]}")) # DANGEROUS HACK
+        # We still need to truncate chapter_id if it's too long, but usually manga_id is the problem
+        # Let's hope first 30 chars of chapter_id are enough and unique
+        row.append(InlineKeyboardButton(btn_text, callback_data=f"dl_ask_{source}_{safe_manga_id_dl}_{ch['id'][:30]}"))
         if len(row) == 2:
             buttons.append(row)
             row = []
@@ -374,11 +425,11 @@ async def chapters_list_cb(client, callback_query):
     
     nav = []
     if offset >= 10:
-        nav.append(InlineKeyboardButton("⬅ prev", callback_data=f"chapters_{source}_{manga_id}_{offset-10}"))
-    nav.append(InlineKeyboardButton("next ➡", callback_data=f"chapters_{source}_{manga_id}_{offset+10}"))
+        nav.append(InlineKeyboardButton("⬅ prev", callback_data=f"chapters_{source}_{safe_manga_id_nav}_{offset-10}"))
+    nav.append(InlineKeyboardButton("next ➡", callback_data=f"chapters_{source}_{safe_manga_id_nav}_{offset+10}"))
     buttons.append(nav)
     
-    buttons.append([InlineKeyboardButton("⬅ back to manga", callback_data=f"view_{source}_{manga_id}")])
+    buttons.append([InlineKeyboardButton("⬅ back to manga", callback_data=f"view_{source}_{safe_manga_id_view}")])
     
     caption_text = f"<b>select chapter to download (standard):</b>\n<b>Source:</b> {source}\npage: {int(offset/10)+1}\n<i>note: uploads to default channel.</i>"
     
@@ -398,7 +449,12 @@ async def chapters_list_cb(client, callback_query):
 async def custom_dl_start_cb(client, callback_query):
     parts = callback_query.data.split("_")
     source = parts[2]
-    manga_id = "_".join(parts[3:])
+    user_id = callback_query.from_user.id
+    manga_id = resolve_manga_id("_".join(parts[3:]), user_id)
+    
+    if not manga_id:
+        await callback_query.answer("❌ Session expired. Please search again.", show_alert=True)
+        return
     
     user_id = callback_query.from_user.id
     
@@ -609,8 +665,13 @@ async def execute_download(client, target_chat_id, source, manga_id, chapter_id,
 async def dl_ask_cb(client, callback_query):
     data = callback_query.data.split("_")
     source = data[2]
-    manga_id = data[3]
+    user_id = callback_query.from_user.id
+    manga_id = resolve_manga_id(data[3], user_id)
     chapter_id = "_".join(data[4:])
+    
+    if not manga_id:
+        await callback_query.answer("❌ Session expired. Please search again.", show_alert=True)
+        return
     
     
     db_channel = await Seishiro.get_default_channel()
