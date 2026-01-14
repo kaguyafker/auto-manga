@@ -229,7 +229,8 @@ async def search_logic(client, message, query):
     """
     Search all sources concurrently and display results grouped by source.
     """
-    logger.info(f"search_logic triggered for query: '{query}' by user {message.from_user.id}")
+    user_id = message.from_user.id
+    logger.info(f"search_logic triggered for query: '{query}' by user {user_id}")
     
     if len(query) < 2:
         await message.reply_text("❌ Query too short. Please enter at least 2 characters.")
