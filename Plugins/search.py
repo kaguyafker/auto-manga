@@ -3,35 +3,54 @@ from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from config import Config
 from Plugins.downloading import Downloader
-from Plugins.Sites.mangadex import MangaDexAPI
-from Plugins.Sites.mangaforest import MangaForestAPI
 from Database.database import Seishiro
 from Plugins.helper import edit_msg_with_pic, get_styled_text, user_states, user_data, WAITING_CHAPTER_INPUT
 from Plugins.logs_dump import log_activity, send_to_dump
 import logging
 import asyncio
 import shutil
-from pathlib import Path
 import os
 import re
+import traceback
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
-
-from Plugins.Sites.mangakakalot import MangakakalotAPI
-from Plugins.Sites.allmanga import AllMangaAPI
-
 SITES = {
-    "MangaDex": MangaDexAPI,
-    "MangaForest": MangaForestAPI,
-    "Mangakakalot": MangakakalotAPI,
-    "AllManga": AllMangaAPI,
-    "WebCentral": None # Placeholder until verified or imported
+    "MangaDex": None,
+    "MangaForest": None,
+    "Mangakakalot": None,
+    "AllManga": None,
+    "WebCentral": None
 }
+
+try:
+    from Plugins.Sites.mangadex import MangaDexAPI
+    SITES["MangaDex"] = MangaDexAPI
+except Exception as e:
+    logger.error(f"Failed to import MangaDexAPI: {e}")
+
+try:
+    from Plugins.Sites.mangaforest import MangaForestAPI
+    SITES["MangaForest"] = MangaForestAPI
+except Exception as e:
+    logger.error(f"Failed to import MangaForestAPI: {e}")
+
+try:
+    from Plugins.Sites.mangakakalot import MangakakalotAPI
+    SITES["Mangakakalot"] = MangakakalotAPI
+except Exception as e:
+    logger.error(f"Failed to import MangakakalotAPI: {e}")
+
+try:
+    from Plugins.Sites.allmanga import AllMangaAPI
+    SITES["AllManga"] = AllMangaAPI
+except Exception as e:
+    logger.error(f"Failed to import AllMangaAPI: {e}")
 
 try:
     from Plugins.Sites.webcentral import WebCentralAPI
     SITES["WebCentral"] = WebCentralAPI
-except ImportError:
+except Exception:
     pass
 
 def get_api_class(source):
@@ -44,24 +63,34 @@ async def search_single_source(source: str, query: str):
     Returns: List of manga dictionaries or empty list
     """
     try:
+        logger.info(f"Starting search on {source} for '{query}'")
         API = get_api_class(source)
         if not API:
             logger.warning(f"Source {source} has no API class")
             return []
         
-        async with API(Config) as api:
-            if not hasattr(api, 'search_manga'):
-                logger.warning(f"Source {source} does not implement search_manga")
-                return []
+        # Add a timeout to individual source searches
+        try:
+            async with API(Config) as api:
+                if not hasattr(api, 'search_manga'):
+                    logger.warning(f"Source {source} does not implement search_manga")
+                    return []
+                
+                # Python 3.10 compatible timeout
+                results = await asyncio.wait_for(api.search_manga(query), timeout=15)
+                logger.info(f"Source {source} returned {len(results) if results else 0} results")
+                return results if results else []
+        except asyncio.TimeoutError:
+            logger.error(f"Search timed out for {source}")
+            return []
             
-            results = await api.search_manga(query)
-            return results if results else []
     except Exception as e:
         logger.error(f"Search failed for {source}: {e}")
+        logger.error(traceback.format_exc())
         return []
 
 
-@Client.on_message(filters.text & filters.private & ~filters.command(["start", "help", "settings", "search"]))
+@Client.on_message(filters.text & filters.private & ~filters.command(["start", "help", "settings", "search", "ping", "id", "load", "sites", "version"]), group=2)
 async def message_handler(client, message):
     try:
         user_id = message.from_user.id
@@ -113,7 +142,7 @@ async def message_handler(client, message):
         logger.error(f"Error in search message_handler: {e}")
         await message.reply(f"❌ search error: {e}")
 
-@Client.on_message(filters.command("search") & filters.private)
+@Client.on_message(filters.command("search") & filters.private, group=2)
 async def search_command_handler(client, message):
     try:
         user_id = message.from_user.id
@@ -161,17 +190,23 @@ async def search_command_handler(client, message):
     except Exception as e:
         logger.error(f"Error in search_command_handler: {e}")
         await message.reply(f"❌ search error: {e}")
+@Client.on_message(filters.command("sites") & filters.private)
+async def sites_handler(client, message):
+    loaded = [s for s, v in SITES.items() if v is not None]
+    await message.reply_text(f"📡 **Available Sources:**\n{', '.join(loaded) or 'None'}")
 
 async def search_logic(client, message, query):
     """
     Search all sources concurrently and display results grouped by source.
     """
+    logger.info(f"search_logic triggered for query: '{query}' by user {message.from_user.id}")
+    
     if len(query) < 2:
-        await message.reply("❌ Query too short. Please enter at least 2 characters.")
+        await message.reply_text("❌ Query too short. Please enter at least 2 characters.")
         return
     
     # Show searching status
-    status_msg = await message.reply(
+    status_msg = await message.reply_text(
         f"<b>🔍 Searching all sources for:</b> {query}\n\n<i>⏳ Please wait...</i>",
         parse_mode=enums.ParseMode.HTML
     )
@@ -179,13 +214,14 @@ async def search_logic(client, message, query):
     try:
         # Get all available sources
         available_sites = [s for s in SITES.keys() if SITES[s] is not None]
+        logger.info(f"Available sites for search: {available_sites}")
         
         if not available_sites:
             await status_msg.edit_text("❌ No sources available.")
             return
         
         # Search all sources concurrently
-        logger.info(f"Searching {len(available_sites)} sources for: {query}")
+        logger.info(f"Starting concurrent search for: {query}")
         search_tasks = [search_single_source(source, query) for source in available_sites]
         results_by_source = await asyncio.gather(*search_tasks, return_exceptions=True)
         
@@ -196,7 +232,8 @@ async def search_logic(client, message, query):
         
         for source, results in zip(available_sites, results_by_source):
             if isinstance(results, Exception):
-                logger.error(f"Exception from {source}: {results}")
+                logger.error(f"Gather exception from {source}: {results}")
+                logger.error(traceback.format_exc())
                 results_summary[source] = 0
                 continue
             
@@ -207,17 +244,18 @@ async def search_logic(client, message, query):
             # Take top 5 results per source
             source_results = results[:5]
             results_summary[source] = len(source_results)
+            logger.info(f"Processing {len(source_results)} results from {source}")
             
             for manga in source_results:
                 # Truncate title to fit in button (max 64 bytes for callback_data)
-                title = manga['title'][:35].strip()
-                if len(manga['title']) > 35:
+                title = str(manga.get('title', 'Unknown'))[:35].strip()
+                if len(str(manga.get('title', 'Unknown'))) > 35:
                     title += "..."
                 
                 button_text = f"{source}: {title}"
                 
                 # Ensure manga_id is safe for callback data
-                manga_id = str(manga['id'])[:20]  # Limit ID length
+                manga_id = str(manga.get('id', ''))[:25]  # Limit ID length
                 
                 buttons.append([InlineKeyboardButton(
                     button_text,
@@ -246,6 +284,8 @@ async def search_logic(client, message, query):
                 parse_mode=enums.ParseMode.HTML
             )
         
+        logger.info(f"Search complete. Found {total_results} total results.")
+        
         # Log the search activity
         await log_activity(
             client,
@@ -255,8 +295,9 @@ async def search_logic(client, message, query):
         )
         
     except Exception as e:
-        logger.error(f"Error in search_logic: {e}", exc_info=True)
-        await status_msg.edit_text(f"❌ Search error: {e}")
+        logger.error(f"Critical error in search_logic: {e}")
+        logger.error(traceback.format_exc())
+        await status_msg.edit_text(f"❌ Search error: {e}\n\nCheck logs for more details.")
 
 
 # Removed search_source_cb - no longer needed as we search all sources simultaneously

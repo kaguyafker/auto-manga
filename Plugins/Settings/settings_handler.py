@@ -22,10 +22,11 @@ async def cancel_input_cb(client, callback_query):
     await callback_query.message.reply_text("cancelled.", reply_markup=InlineKeyboardMarkup(buttons))
 
 
-@Client.on_message(filters.private & ~filters.command(["start", "help", "admin"]))
+@Client.on_message(filters.private & ~filters.command(["start", "help", "admin", "search", "ping", "id", "load", "sites", "version"]))
 async def settings_input_listener(client, message):
     user_id = message.from_user.id
     if user_id not in user_states:
+        message.continue_propagation()
         return
 
     state_info = user_states[user_id]

@@ -90,14 +90,11 @@ async def start_msg(client, message):
             logger.error(f"Database error (Add User): {db_e}")
 
         text = (
-            f"👋 hello {message.from_user.first_name}!\n\n"
-            f"i am an advanced manga downloader & uploader bot. "
-            f"i can help you manage and automate your manga channel.\n\n"
-            f"🚀 features:\n"
-            f"• auto-upload to channel\n"
-            f"• custom thumbnails\n"
-            f"• watermarking\n\n" 
-            f"click the buttons below to control me!"
+            f"👋 HELLO (DEPLOY VERIFIED - V4)!\n\n"
+            f"<b>Welcome {message.from_user.first_name}</b>\n"
+            "The multi-source search is now active.\n\n"
+            "Try sending a manga name like <code>one piece</code> or use /search.\n\n"
+            "<i>Debug info: Python 3.10 compat active.</i>"
         )
         
         buttons = InlineKeyboardMarkup([
@@ -164,5 +161,44 @@ async def help_menu(client, callback_query):
     buttons = [[InlineKeyboardButton("🔙 back", callback_data="start_menu")]]
     
     await edit_msg_with_pic(callback_query.message, text, InlineKeyboardMarkup(buttons))
+
+
+@Client.on_message(filters.command("ping"))
+async def ping_handler(client, message):
+    await message.reply_text("Pong! 🏓 (Start Plugin Active)")
+
+@Client.on_message(filters.command("id"))
+async def id_handler(client, message):
+    await message.reply_text(f"👤 **Your ID:** `{message.from_user.id}`\n👑 **Owner ID:** `{Config.USER_ID}`")
+
+@Client.on_message(filters.command("version"))
+async def version_handler(client, message):
+    from datetime import datetime
+    await message.reply_text(f"📅 **Bot Version:** 1.2\n🐍 **Environ:** Python 3.10 Compat\n⏰ **Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+@Client.on_message(filters.command("load"))
+async def load_debug_handler(client, message):
+    if message.from_user.id != Config.USER_ID:
+        return
+    
+    try:
+        import traceback
+        status = "🔍 **Import Debug:**\n\n"
+        
+        try:
+            from Plugins import search
+            status += "✅ `Plugins.search` loaded.\n"
+        except Exception:
+            status += f"❌ `Plugins.search` failed:\n<code>{traceback.format_exc()[-500:]}</code>\n"
+            
+        try:
+            from Plugins.Sites import allmanga, mangadex, mangakakalot
+            status += "✅ Site APIs loaded.\n"
+        except Exception:
+            status += f"❌ Sites load failed:\n<code>{traceback.format_exc()[-500:]}</code>\n"
+            
+        await message.reply_text(status, parse_mode=enums.ParseMode.HTML)
+    except Exception as e:
+        await message.reply_text(f"Critical debug error: {e}")
 
 
